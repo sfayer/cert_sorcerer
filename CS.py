@@ -666,7 +666,8 @@ if __name__ == '__main__':
     print "Usage: CS.py <cn of user or server>"
     print "   Or: CS.py -sys"
     print ""
-    print "The -sys option means operate on this machines hostcert directly."
+    print "The -sys option means operate on this machine's hostcert directly."
+    print ""
     sys.exit(0)
 
   syscert = (sys.argv[1] == "-sys")
