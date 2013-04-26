@@ -28,7 +28,7 @@ import StringIO
 from xml.dom import minidom
 from subprocess import Popen, PIPE
 from OpenSSL import crypto
-from OpenSSL.crypto import X509, X509Name, X509Req, X509Extension, PKey
+from OpenSSL.crypto import X509Req, X509Extension, PKey
 
 # We need sha on RHEL5, but it's depreciated on RHEL6
 # The warning is hidden by the default command line
@@ -127,10 +127,10 @@ class CS_StoredCert:
 
   def __init__(self, path, cn):
     """ Initialise the store, creating the required directory structure. """
-    cn = cn.replace(" ", "_") # Make paths without spaces
+    real_cn = cn.replace(" ", "_") # Make paths without spaces
     self._path = path
-    self._cn = cn
-    hostpath = os.path.join(path, cn)
+    self._cn = real_cn
+    hostpath = os.path.join(path, real_cn)
     self._hostpath = hostpath
     self._paths = { CS_Const.CERT_FILE: os.path.join(hostpath,
                                                      CS_DEF_CERTNAME),
@@ -186,17 +186,17 @@ class CS_StoredCert:
     fd = os.open(self._paths[file_type],
                  os.O_WRONLY | os.O_TRUNC | os.O_CREAT,
                  0600)
-    file = os.fdopen(fd, "w")
-    file.write(key)
-    file.close()
+    file_out = os.fdopen(fd, "w")
+    file_out.write(key)
+    file_out.close()
     self.update()
 
   def read(self, file_type):
     """ Read an existing file from the store. """
     fd = os.open(self._paths[file_type], os.O_RDONLY)
-    file = os.fdopen(fd, "r")
-    pem = file.read()
-    file.close()
+    file_in = os.fdopen(fd, "r")
+    pem = file_in.read()
+    file_in.close()
     return pem
 
   def prepare_renew(self):
@@ -293,7 +293,7 @@ class CS_CertTools:
   @staticmethod
   def get_pubkey(store):
     """ Get the store public key (from the CSR) in PEM format. """
-    # pyOpenssl has no accessor for the public key, we'll have to shell openssl :(
+    # pyOpenssl has no accessor for the public key, we'll shell openssl
     if not store.get_state() >= CS_Const.CSR:
       raise "Certificate in wrong state to get public key."
     ssl_cmd = ["openssl",
@@ -315,9 +315,9 @@ class CS_CertTools:
     """ Get the serial of a certificate by path. """
     if not os.path.exists(path):
       raise "Client key not found while getting serial."
-    file = open(path, "r")
-    pem = file.read()
-    file.close()
+    file_in = open(path, "r")
+    pem = file_in.read()
+    file_in.close()
     cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem)
     return cert.get_serial_number()
 
@@ -395,10 +395,10 @@ class CS_RemoteCA:
     # Attach any post data
     if data:
       curl.setopt(curl.POSTFIELDS, data)
-    # Set the write function to write to buffer
-    buffer = StringIO.StringIO()
+    # Set the write function to write to a buffer
+    body = StringIO.StringIO()
     headers = StringIO.StringIO()
-    curl.setopt(curl.WRITEFUNCTION, buffer.write)
+    curl.setopt(curl.WRITEFUNCTION, body.write)
     curl.setopt(curl.HEADERFUNCTION, headers.write)
     # Set-up CA verification
     if cafile:
@@ -425,7 +425,7 @@ class CS_RemoteCA:
       # Normal requests finish here
       # Return the return code & string
       curl.close()
-      return (code, buffer.getvalue())
+      return (code, body.getvalue())
     # We got a 401 and PPPK is enabled, which means we can do PPPK auth now
     print "Starting PPPK authentication..."
     real_headers = headers.getvalue().split("\n")
@@ -450,15 +450,15 @@ class CS_RemoteCA:
                  "response: %s" % resp_code ]
     curl.setopt(curl.HTTPHEADER, ext_hdr)
     # Reset the buffers and re-send the request
-    buffer = StringIO.StringIO()
+    body = StringIO.StringIO()
     headers = StringIO.StringIO()
-    curl.setopt(curl.WRITEFUNCTION, buffer.write)
+    curl.setopt(curl.WRITEFUNCTION, body.write)
     curl.setopt(curl.HEADERFUNCTION, headers.write)
     curl.perform()
     code = curl.getinfo(pycurl.HTTP_CODE)
     curl.close()
     # Either we got a success code now, or some other error...
-    return (code, buffer.getvalue())
+    return (code, body.getvalue())
 
   @staticmethod
   def post_csr(csrpem,
@@ -468,17 +468,20 @@ class CS_RemoteCA:
                userkey = CS_DEF_KEY,
                pinhash = CS_DEF_PINHASH,
                email = CS_DEF_EMAIL,
-               server = CS_DEF_URL,
                renewal_cert = None,
                renewal_key = None):
     """ Post a new certificate request with the given details to a CA. """
     key = userkey
     use_pppk = CS_Const.Full_PPPK
     renewal_info = ""
-    csr_xml = """<?xml version="1.0" encoding="UTF-8" standalone="no"?><CSR><Request>%s</Request><PIN>%s</PIN><Email>%s</Email>%s<Version>%s</Version></CSR>"""
+    csr_xml = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>""" \
+              """<CSR><Request>%s</Request><PIN>%s</PIN><Email>%s</Email>""" \
+              """%s<Version>%s</Version></CSR>"""
     csr_uri = "CSR"
     if hostcert and not renewal_cert:
-      csr_xml = """<?xml version="1.0" encoding="UTF-8" standalone="no"?><Bulk><CSR><Request>%s</Request><PIN>%s</PIN><Email>%s</Email>%s<Version>%s</Version></CSR></Bulk>"""
+      csr_xml = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>""" \
+                """<Bulk><CSR><Request>%s</Request><PIN>%s</PIN>""" \
+                """<Email>%s</Email>%s<Version>%s</Version></CSR></Bulk>"""
       csr_uri = "CSRs"
     # If we are doing a renewal, we have to include the original public key
     if renewal_cert:
@@ -489,7 +492,7 @@ class CS_RemoteCA:
     # Fill out the fields in the CSR XML structure
     csr_xml = csr_xml % (csrpem, pinhash, email, renewal_info, CS_DEF_VERSION)
     # If requesting a user cert, clear the certs
-    if not hostcert and not renewal:
+    if not hostcert and not renewal_cert:
       usercert = None
       userkey = None
       use_pppk = CS_Const.No_PPPK
@@ -505,19 +508,21 @@ class CS_RemoteCA:
     req_uri = "resources/resource/publickey/%s" % pubkey
     code, data = CS_RemoteCA._do_req(req_uri, None, cafile)
     if not code == 200:
-      raise "CA returned error code %d (%s) while getting cert id." % (code, data)
+      raise "CA returned error code %d (%s) while getting cert id." % \
+              (code, data)
     # Process the XML tree to get the certificate ID out
     doc = minidom.parseString(data)
     certs = doc.getElementsByTagName("certificate")
     if len(certs) < 1:
       return 0 # No ID yet / Public key not found
     if len(certs) > 1:
-      raise "CA returned multiple certificates for public key. This is not yet supported."
+      raise "CA returned multiple certificates for public key. " \
+            "This is not yet supported."
     id_elem = certs[0].getElementsByTagName("id")
     if not len(id_elem) == 1:
       raise "CA returned a certificate with multiple ID tags?"
-    id = id_elem[0].firstChild.data
-    return int(id)
+    serial = id_elem[0].firstChild.data
+    return int(serial)
     
 
   @staticmethod
@@ -561,12 +566,14 @@ class CS_UI:
       userpin = CS_DEF_PINHASH
       useremail = CS_DEF_EMAIL
     else:
-      userpin = raw_input("Please enter a PIN for this request (min 10 chars): ")
+      userpin = raw_input("Please enter a PIN for this request "
+                          "(min 10 chars): ")
       if len(userpin) < 10:
         print "Pin must be at least 10 chars. Exiting."
         sys.exit(0)
       userpin = sha.new(userpin).hexdigest()
-      useremail = raw_input("Please enter your (ideally .ac.uk) e-mail address: ")
+      useremail = raw_input("Please enter your (ideally .ac.uk) "
+                            "e-mail address: ")
       CS_UI.confirm_user("Now ready to create & send request, continue")
     print "Generating keys..."
     CS_CertTools.create_csr(store, cn, hostcert)
@@ -585,9 +592,12 @@ class CS_UI:
     print "Done. You should receive an e-mail from the CA shortly."
     print ""
     if not hostcert:
-      print "As this is a user cert, you should add a key passphrase by running:"
+      print "As this is a user cert, " \
+            "you should add a key passphrase by running:"
       path = store.get_path(CS_Const.KEY_FILE)
-      print '"openssl rsa -in %s -out %s.tmp -des3 && cp %s.tmp %s && rm %s.tmp"' % (path, path, path, path, path)
+      print "openssl rsa -in %s -out %s.tmp -des3" % (path, path)
+      print "cp %s.tmp %s" % (path, path)
+      print "rm %s.tmp" % path
       print ""
 
   @staticmethod
@@ -608,20 +618,30 @@ class CS_UI:
     print "Cert is at: %s" % cert
     print "Key is at: %s" % key
     print ""
-    if not hotcert:
-      print "As this is a user cert, you may want to install these in your home dir by running:"
-      print "mkdir -p ~/.globus %% cp %s ~/.globus/usercert.pem && cp %s ~/.globus/userkey.pem" % (cert, key)
+    if not hostcert:
+      print "As this is a user cert, you may want to install " \
+            "these in your home dir by running:"
+      print "mkdir -p ~/.globus"
+      print "cp %s ~/.globus/usercert.pem" % cert
+      print "cp %s ~/.globus/userkey.pem" % key
       print ""
-      print "You may also want to create a .p12 file to import into your browser by running:"
-      print '"openssl pkcs12 -export -in %s -inkey %s -out gridcert.p12 && chown 600 gridcert.p12"' % (cert, key)
+      print "You may also want to create a .p12 file to import into " \
+            "your browser by running:"
+      print "openssl pkcs12 -export -in %s -inkey %s -out gridcert.p12" \
+              % (cert, key)
+      print "chown 600 gridcert.p12"
       print ""
     if syscert:
       print ""
-      print "You may want to install the hostcert now with the following commands:"
-      print "cp %s /etc/grid-security/hostcert.pem && chmod 644 /etc/grid-security/hostcert.pem" % cert
-      print "cp %s /etc/grid-security/hostkey.pem && chmod 600 /etc/grid-security/hostkey.pem" % key
+      print "You may want to install the hostcert now " \
+            "with the following commands:"
+      print "cp %s /etc/grid-security/hostcert.pem" % cert
+      print "chmod 644 /etc/grid-security/hostcert.pem"
+      print "cp %s /etc/grid-security/hostkey.pem" % key
+      print "chmod 600 /etc/grid-security/hostkey.pem"
       print ""
-      print "Remember that some grid services will also need copies in other locations updating."
+      print "Remember that some grid services will also need copies " \
+            " in other locations updating and/or different permissions."
       print ""
 
   @staticmethod
@@ -631,12 +651,14 @@ class CS_UI:
       userpin = CS_DEF_PINHASH
       useremail = CS_DEF_EMAIL
     else:
-      userpin = raw_input("Please enter a PIN for this renewal (min 10 chars): ")
+      userpin = raw_input("Please enter a PIN for this renewal "
+                          "(min 10 chars): ")
       if len(userpin) < 10:
         print "Pin must be at least 10 chars. Exiting."
         sys.exit(0)
       userpin = sha.new(userpin).hexdigest()
-      useremail = raw_input("Please enter your (ideally .ac.uk) e-mail address: ")
+      useremail = raw_input("Please enter your (ideally .ac.uk) "
+                            "e-mail address: ")
       CS_UI.confirm_user("Now ready to create & send renewal, continue")
     # Start by moving the old cert out of the way
     store.prepare_renew()
@@ -702,10 +724,12 @@ if __name__ == "__main__":
   # Decide what to do based on the current state:
   state = store.get_state()
   if state == CS_Const.Nothing:
-    CS_UI.confirm_user("There is no local data about this DN, request a new cert")
+    CS_UI.confirm_user("There is no local data about this DN, "
+                       "request a new cert")
     CS_UI.new_cert(store, cn, hostcert)
   elif state == CS_Const.CSR:
-    CS_UI.confirm_user("This cert is pending with the CA, check for updates now")
+    CS_UI.confirm_user("This cert is pending with the CA, "
+                       "check for updates now")
     CS_UI.fetch_cert(store, hostcert, syscert)
   elif state == CS_Const.Complete:
     CS_UI.confirm_user("This cert request is complete, start a renewal")
