@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python -W ignore::DeprecationWarning
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,6 @@
 
 import os
 import sys
-import sha
 import time
 import shutil
 import pycurl
@@ -30,6 +29,10 @@ from xml.dom import minidom
 from subprocess import Popen, PIPE
 from OpenSSL import crypto
 from OpenSSL.crypto import X509, X509Name, X509Req, X509Extension, PKey
+
+# We need sha on RHEL5, but it's depreciated on RHEL6
+# The warning is hidden by the default command line
+import sha
 
 # Default Settings
 ## Domain name to append to non-qualified hostnames
@@ -155,10 +158,13 @@ class CS_StoredCert:
   def promote(self):
     """ Promote this store by importing the system hostcert. """
     # Import the system certificates
+    # But don't overwrite or we'll lose the new key!!!
     if os.path.exists(CS_DEF_HOSTCERT):
-      shutil.copy(CS_DEF_HOSTCERT, self._paths[CS_Const.CERT_FILE])
+      if not os.path.exists(self._paths[CS_Const.CERT_FILE]):
+        shutil.copy(CS_DEF_HOSTCERT, self._paths[CS_Const.CERT_FILE])
     if os.path.exists(CS_DEF_HOSTKEY):
-      shutil.copy(CS_DEF_HOSTKEY, self._paths[CS_Const.KEY_FILE])
+      if not os.path.exists(self._paths[CS_Const.KEY_FILE]):
+        shutil.copy(CS_DEF_HOSTKEY, self._paths[CS_Const.KEY_FILE])
     self.update()
 
   def update(self):
