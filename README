@@ -46,7 +46,7 @@ again will fetch the result into your (by default) ~/.cs directory.
 Certs can be renewed by running the same command yet again.
 
 You can optionally operate on the machine's primary hostcert by running:
- CS.py -sys
+ CS.py --sys
 Internally this copies the hostcert into the CS store and then continues as if
 you specified the full host name on the command line.
 
