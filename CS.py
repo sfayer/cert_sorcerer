@@ -157,6 +157,10 @@ class CS_StoredCert:
 
   def promote(self):
     """ Promote this store by importing the system hostcert. """
+    # Don't do anything if the hostkey is already there,
+    # Assume we've already imported the system ones.
+    if os.path.exists(self._paths[CS_Const.KEY_FILE]):
+      return
     # Import the system certificates
     # But don't overwrite or we'll lose the new key!!!
     if os.path.exists(CS_DEF_HOSTCERT):
