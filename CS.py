@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # CS.py - Cert Sorcerer
-# Copyright 2013, Simon Fayer, High Energy Physics, Imperial College
+# Copyright 2013, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates. """
 

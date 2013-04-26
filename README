@@ -1,10 +1,10 @@
 Cert Sorcerer Readme
 --------------------
 
-Cert Sorcerer is a tool for requesting certificates from the UK eScience CA. It
-was primarily designed for users who prefer a console based workflow over a
-proprietary graphical application. It is GPLv3 licensed, see COPYING for
-details.
+Cert Sorcerer (CS) is a tool for requesting certificates from the UK eScience
+CA (although not at-all endorsed or supported by them). It was primarily
+designed for users who prefer a console based workflow over a proprietary
+graphical application. CS is GPLv3 licensed, see COPYING for details.
 
 ** This tool is provided with no warranty what-so-ever, implied or otherwise. **
 
@@ -50,6 +50,9 @@ You can optionally operate on the machine's primary hostcert by running:
 Internally this copies the hostcert into the CS store and then continues as if
 you specified the full host name on the command line.
 
+If you renew a hostcert containing an e-mail address, the renewed certificate
+will not contain one. This is a feature, not a bug (DNs containing an e-mail
+address are no-longer supported by most grid middleware).
 
 Bugs
 ----
