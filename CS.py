@@ -683,23 +683,23 @@ class CS_UI:
 
 if __name__ == "__main__":
   # Check args
-  if len(sys.argv) < 2:
+  if len(sys.argv) < 2 or sys.argv[1] == "--help":
     print "Cert Sorcerer, Version: 1.0"
     print "Usage: CS.py <cn of user or server>"
-    print "   Or: CS.py -sys"
+    print "   Or: CS.py --sys"
     print ""
-    print "The -sys option means operate on this machine's hostcert directly."
+    print "The --sys option means operate on this machine's hostcert directly."
     print ""
     sys.exit(0)
 
-  syscert = (sys.argv[1] == "-sys")
+  syscert = (sys.argv[1] == "--sys")
 
   if not syscert:
     # Turn the args into a string and decide if it's a host or person!
     cn = " ".join(sys.argv[1:])
   else:
     if len(sys.argv) > 2:
-      print "Extra arguments found after -sys?"
+      print "Extra argument(s) found after --sys?"
       sys.exit(0)
     cn = socket.gethostname()
 
