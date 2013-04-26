@@ -583,14 +583,15 @@ class CS_UI:
       store.clear() # Failure, reset request so it's easy to try again
       raise
     print 'Done. You should receive an e-mail from the CA shortly.'
+    print ''
     if not hostcert:
-      print ''
       print 'As this is a user cert, you should add a key passphrase by running:'
       path = store.get_path(CS_Const.KEY_FILE)
       print '"openssl rsa -in %s -out %s.tmp -des3 && cp %s.tmp %s && rm %s.tmp"' % (path, path, path, path, path)
+      print ''
 
   @staticmethod
-  def fetch_cert(store, hostcert):
+  def fetch_cert(store, hostcert, syscert = False):
     """ Retreive a signed cert from the CA. """
     pubkey = CS_CertTools.get_pubkey(store)
     print 'Checking...'
@@ -606,13 +607,22 @@ class CS_UI:
     key = store.get_path(CS_Const.KEY_FILE)
     print 'Cert is at: %s' % cert
     print 'Key is at: %s' % key
+    print ''
     if not hotcert:
-      print ''
       print 'As this is a user cert, you may want to install these in your home dir by running:'
       print 'mkdir -p ~/.globus %% cp %s ~/.globus/usercert.pem && cp %s ~/.globus/userkey.pem' % (cert, key)
       print ''
       print 'You may also want to create a .p12 file to import into your browser by running:'
       print '"openssl pkcs12 -export -in %s -inkey %s -out gridcert.p12 && chown 600 gridcert.p12"' % (cert, key)
+      print ''
+    if syscert:
+      print ''
+      print 'You may want to install the hostcert now with the following commands:'
+      print 'cp %s /etc/grid-security/hostcert.pem && chmod 644 /etc/grid-security/hostcert.pem' % cert
+      print 'cp %s /etc/grid-security/hostkey.pem && chmod 600 /etc/grid-security/hostkey.pem' % key
+      print ''
+      print 'Remember that some grid services will also need copies in other locations updating.'
+      print ''
 
   @staticmethod
   def renew_cert(store, cn, hostcert):
@@ -695,7 +705,7 @@ if __name__ == '__main__':
     CS_UI.new_cert(store, cn, hostcert)
   elif state == CS_Const.CSR:
     CS_UI.confirm_user('This cert is pending with the CA, check for updates now')
-    CS_UI.fetch_cert(store, hostcert)
+    CS_UI.fetch_cert(store, hostcert, syscert)
   elif state == CS_Const.Complete:
     CS_UI.confirm_user('This cert request is complete, start a renewal')
     CS_UI.renew_cert(store, cn, hostcert)
