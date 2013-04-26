@@ -2,7 +2,7 @@ Cert Sorcerer Readme
 --------------------
 
 Cert Sorcerer (CS) is a tool for requesting certificates from the UK eScience
-CA (although not at-all endorsed or supported by them). It was primarily
+CA (although isn't endorsed or supported by them in any way). It was primarily
 designed for users who prefer a console based workflow over a proprietary
 graphical application. CS is GPLv3 licensed, see COPYING for details.
 
