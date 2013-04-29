@@ -1,10 +1,11 @@
 Cert Sorcerer Readme
 --------------------
 
-Cert Sorcerer (CS) is a tool for requesting certificates from the UK eScience
-CA (although isn't endorsed or supported by them in any way). It was primarily
-designed for users who prefer a console based workflow over a proprietary
-graphical application. CS is GPLv3 licensed, see COPYING for details.
+Cert Sorcerer (CS) is a tool for requesting certificates from the UK eScience CA
+(although isn't endorsed or supported by them in any way). It was primarily
+designed for users who want to request/renew host certificates and prefer a
+console based workflow over a proprietary graphical application. CS is GPLv3
+licensed, see COPYING for details.
 
 ** This tool is provided with no warranty what-so-ever, implied or otherwise. **
 
@@ -28,6 +29,13 @@ cause the CA to reject your request automatically.
 
 Usage
 -----
+
+***** First you must customise CS.py for your site. *****
+
+Edit CS.py to change the "Default Settings" section to match your parameters, if
+you don't do this, your certificate requests will get rejected.
+
+*********************************************************
 
 All steps in a cert lifetime can be achieved just by calling CS.py with a CN.
 User DNs contain a space, host DNs do not. If a single name is specified the
@@ -53,6 +61,7 @@ you specified the full host name on the command line.
 If you renew a hostcert containing an e-mail address, the renewed certificate
 will not contain one. This is a feature, not a bug (DNs containing an e-mail
 address are no-longer supported by most grid middleware).
+
 
 Bugs
 ----
@@ -81,7 +90,8 @@ this looks like the following:
 ~/.cs/myhost.domain.name/cert.pem.old - A copy of a pre-renewal cert
 
 These files and directory should all be automatically created with permission
-mode 0600 or 0700 for security.
+mode 0600 or 0700 for security. User certificates are the same, but any spaces
+are replaced with underscores, i.e. ~/.cs/john_smith/cert.pem ...
 
 If a cert.pem exists, then it is assumed a renewal should be done. If a csr.pem
 exists (with no cert.pem) then CS will attempt to fetch a new certificate. If
