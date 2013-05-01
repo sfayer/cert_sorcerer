@@ -732,7 +732,8 @@ if __name__ == "__main__":
                        "check for updates now")
     CS_UI.fetch_cert(store, hostcert, syscert)
   elif state == CS_Const.Complete:
-    CS_UI.confirm_user("This cert request is complete, start a renewal")
+    CS_UI.confirm_user("This certificate has been previously signed, "
+                       "start a renewal")
     CS_UI.renew_cert(store, cn, hostcert)
   else:
     raise "Unknown Certificate State!"
