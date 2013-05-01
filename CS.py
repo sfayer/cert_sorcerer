@@ -16,11 +16,14 @@
 # CS.py - Cert Sorcerer
 # Copyright 2013, High Energy Physics, Imperial College
 #
-""" Cert Sorcerer - A tool for requesting certificates. """
+""" Cert Sorcerer - A tool for requesting certificates.
+    Version 1.0.1
+"""
 
 import os
 import sys
 import time
+import getopt
 import shutil
 import pycurl
 import socket
@@ -549,8 +552,10 @@ class CS_UI:
   """
 
   @staticmethod
-  def confirm_user(prompt):
+  def confirm_user(prompt, batch = False):
     """ Give the user a yes/no choice with prompt and exit on "No". """
+    if batch:
+      return # In batch mode, print no prompt, just continue...
     while True:
       res = raw_input(prompt + " [y/N]? ")
       if res == "n" or res == "N" or len(res) == 0:
@@ -567,7 +572,7 @@ class CS_UI:
       useremail = CS_DEF_EMAIL
     else:
       userpin = raw_input("Please enter a PIN for this request "
-                          "(min 10 chars): ")
+                          "(min 10 chars): ", batch)
       if len(userpin) < 10:
         print "Pin must be at least 10 chars. Exiting."
         sys.exit(0)
@@ -681,24 +686,43 @@ class CS_UI:
     print "Done. You should receive an e-mail when the renewed cert is ready."
 
 
-if __name__ == "__main__":
-  # Check args
-  if len(sys.argv) < 2 or sys.argv[1] == "--help":
-    print "Cert Sorcerer, Version: 1.0"
-    print "Usage: CS.py <cn of user or server>"
-    print "   Or: CS.py --sys"
-    print ""
-    print "The --sys option means operate on this machine's hostcert directly."
-    print ""
-    sys.exit(0)
+def print_help():
+  print "Cert Sorcerer, Version: 1.0.1"
+  print "Usage: CS.py [--batch] <cn of user or server>"
+  print "   Or: CS.py [--batch] --sys"
+  print ""
+  print "The --sys option means operate on this machine's hostcert directly."
+  print "The --batch options makes y/n prompts assume yes. Use with caution."
+  print ""
+  sys.exit(0)
 
-  syscert = (sys.argv[1] == "--sys")
+
+if __name__ == "__main__":
+  syscert = False
+  batch = False
+
+  # Process command line args
+  try:
+    optlist, args = getopt.getopt(sys.argv[1:], '', [ 'sys', 'batch', 'help' ])
+  except getopt.GetoptError as err:
+    print str(err)
+    print_help()
+
+  for opt in optlist:
+    if opt[0] == "--sys":
+      syscert = True
+    elif opt[0] == "--batch":
+      batch = True
+    elif opt[0] == "--help":
+      print_help()
 
   if not syscert:
-    # Turn the args into a string and decide if it's a host or person!
-    cn = " ".join(sys.argv[1:])
+    # Turn the remaining args into a string
+    if len(args) < 1:
+      print_help()
+    cn = " ".join(args)
   else:
-    if len(sys.argv) > 2:
+    if len(args) > 0:
       print "Extra argument(s) found after --sys?"
       sys.exit(0)
     cn = socket.gethostname()
@@ -725,15 +749,15 @@ if __name__ == "__main__":
   state = store.get_state()
   if state == CS_Const.Nothing:
     CS_UI.confirm_user("There is no local data about this DN, "
-                       "request a new cert")
+                       "request a new cert", batch)
     CS_UI.new_cert(store, cn, hostcert)
   elif state == CS_Const.CSR:
     CS_UI.confirm_user("This cert is pending with the CA, "
-                       "check for updates now")
+                       "check for updates now", batch)
     CS_UI.fetch_cert(store, hostcert, syscert)
   elif state == CS_Const.Complete:
     CS_UI.confirm_user("This certificate has been previously signed, "
-                       "start a renewal")
+                       "start a renewal", batch)
     CS_UI.renew_cert(store, cn, hostcert)
   else:
     raise "Unknown Certificate State!"
