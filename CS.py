@@ -572,7 +572,7 @@ class CS_UI:
       useremail = CS_DEF_EMAIL
     else:
       userpin = raw_input("Please enter a PIN for this request "
-                          "(min 10 chars): ", batch)
+                          "(min 10 chars): ")
       if len(userpin) < 10:
         print "Pin must be at least 10 chars. Exiting."
         sys.exit(0)
