@@ -184,11 +184,11 @@ class CS_StoredCert:
     if os.path.exists(self._paths[CS_Const.CERT_FILE]):
       self._state = CS_Const.Complete
 
-  def write(self, file_type, key):
+  def write(self, file_type, key, perms = 0600):
     """ (Over)write a file to the store. """
     fd = os.open(self._paths[file_type],
                  os.O_WRONLY | os.O_TRUNC | os.O_CREAT,
-                 0600)
+                 perms)
     file_out = os.fdopen(fd, "w")
     file_out.write(key)
     file_out.close()
@@ -616,7 +616,7 @@ class CS_UI:
       return
     print "Cert ID is: %d. Fetching..." % certid
     certpem = CS_RemoteCA.get_cert(certid, store.get_path(CS_Const.CA_FILE))
-    store.write(CS_Const.CERT_FILE, certpem)
+    store.write(CS_Const.CERT_FILE, certpem, 0644)
     print "Completed."
     cert = store.get_path(CS_Const.CERT_FILE)
     key = store.get_path(CS_Const.KEY_FILE)
@@ -641,9 +641,7 @@ class CS_UI:
       print "You may want to install the hostcert now " \
             "with the following commands:"
       print "cp %s /etc/grid-security/hostcert.pem" % cert
-      print "chmod 644 /etc/grid-security/hostcert.pem"
       print "cp %s /etc/grid-security/hostkey.pem" % key
-      print "chmod 600 /etc/grid-security/hostkey.pem"
       print ""
       print "Remember that some grid services will also need copies " \
             " in other locations updating and/or different permissions."
