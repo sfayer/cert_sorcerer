@@ -1,0 +1,72 @@
+Cert Sorcerer (CS) Quick-Start Guide
+------------------------------------
+
+First you need to install the dependancies (on RHEL do):
+yum install openssl python PyOpenSSL python-pycurl
+
+You should then fetch CS.py and edit the constants at the top for your site.
+
+
+Getting a New Cert
+------------------
+
+To request a new cert just run CS.py followed by the CN, for example to get a user cert:
+
+./CS.py "john smith"
+
+or for a host cert:
+
+./CS.py "myhost.some.domain.com"
+
+Getting new host certificates requires a valid user cert & key in
+~/.globus/user{cert,key}.pem .
+
+
+Very Quick Host Cert Renewal
+----------------------------
+
+If you want to just renew a hostcert, the easiest thing to do is run this on
+the actual machine as root (or whoever owns /etc/grid-security/hostkey.pem):
+
+./CS.py --sys
+
+Host certificate renewals don't require a valid user key.
+
+
+Importing A Certificate
+-----------------------
+
+If you want to renew a certificate that's already been issued you need to place
+it into the ~/.cs directory under a directory named after the CN. Any spaces in
+the CN should be replaced with underscores.
+
+mkdir -p ~/.cs/john_smith
+chown 700 ~/.cs/john_smith
+
+# Copy the old certificate & key into the directory
+cp my_user_cert.pem ~/.cs/john_smith/cert.pem
+cp my_user_key.pem ~/.cs/john_smith/key.pem
+
+
+This also works for hostcerts:
+mkdir -p ~/.cs/myhost.some.domain.com
+chown 700 ~/.cs/myhost.some.domain.com
+cp hostcert.pem ~/.cs/myhost.some.domain.com/cert.pem
+cp hostkey.pem ~/.cs/myhost.some.domain.com/key.pem
+
+If you certificate is in .p12 format, replace the cp steps in the above with:
+openssl pkcs12 -nocerts -nodes -in mycert.p12 -out ~/.cs/john_smith/key.pem
+openssl pkcs12 -clcerts -nokeys -in mycert.p12 -out ~/.cs/john_smith/cert.pem
+
+
+Renewing A Certificate
+----------------------
+
+If the certificate was issued with CS then you just need to invoke it with the
+same parameters you did originally, i.e.
+
+./CS.py "john smith"
+
+If the certificate wasn't originally requested with CS, follow the importing a
+certificate step and then invoke it with the CN as contained in the cert.
+
