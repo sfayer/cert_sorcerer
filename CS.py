@@ -17,7 +17,7 @@
 # Copyright 2013, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.0.1
+    Version 1.0.2
 """
 
 import os
@@ -292,6 +292,9 @@ class CS_CertTools:
     # Write them out to the store
     store.write(CS_Const.KEY_FILE, key_pem)
     store.write(CS_Const.CSR_FILE, csr_pem)
+    # Just to be 100% sure everything is compabile...
+    # ... Ensure the key is in PKCS#1 format
+    CS_CertTools.pkcs8_to_pkcs1(store.get_path(CS_Const.KEY_FILE))
 
   @staticmethod
   def get_pubkey(store):
@@ -379,6 +382,18 @@ class CS_CertTools:
     resp = pow(base, exponent, modulus)
     return "%x" % resp
 
+  @staticmethod
+  def pkcs8_to_pkcs1(keyfile):
+    """ Converts a private key from PKCS8 format into PKCS1 format.
+        Most grid software requires PKCS1 on all platforms. """
+    # This is once again a job for openssl
+    # but first create a temp file
+    tmpfile = "%s.pkcs8" % keyfile 
+    shutil.copy(keyfile, tmpfile)
+    ssl_cmd = ["openssl", "rsa", "-in", tmpfile, "-out", keyfile ]
+    p = Popen(ssl_cmd, stdout = PIPE)
+    p.communicate()
+    os.unlink(tmpfile)
 
 class CS_RemoteCA:
   """ Functions for interacting with a remote CA via a web-service. """

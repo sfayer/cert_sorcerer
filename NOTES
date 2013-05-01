@@ -1,3 +1,7 @@
+Version 1.0.2 - 01/05/2013
+ - Ensure private key is in PKCS#1 format.
+ - Set cert permissions 0644 for simplicity.
+
 Version 1.0.1 - 01/05/2013
  - Added batch option.
  - Minor improvements.
