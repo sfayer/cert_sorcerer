@@ -1,7 +1,7 @@
 Cert Sorcerer (CS) Quick-Start Guide
 ------------------------------------
 
-First you need to install the dependancies (on RHEL do):
+First you need to install the dependencies (on RHEL do):
 yum install openssl python PyOpenSSL python-pycurl
 
 You should then fetch CS.py and edit the constants at the top for your site.
