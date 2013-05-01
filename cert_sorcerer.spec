@@ -2,7 +2,7 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.0.0
+Version:        1.0.1
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
@@ -40,6 +40,10 @@ rm -rf %{buildroot}
 %doc README
 
 %changelog
-* Fri Apr 26 2013 Simon Fayer <sf105@ic.ac.uk>
+* Fri Apr 26 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.1-1
+- Latest version.
+- New batch mode.
+
+* Fri Apr 26 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.0-1
 - Initial version.
 
