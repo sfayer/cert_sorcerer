@@ -6,6 +6,11 @@ yum install openssl python PyOpenSSL python-pycurl
 
 You should then fetch CS.py and edit the constants at the top for your site.
 
+It should be noted that CS generates key files in PKCS#1 format regardless of
+the host openssl version (by doing a conversion step after any key generate).
+This should be suitable for most grid middleware. If PKCS#8 is absolutely
+required the "openssl pkcs8" command can be used to convert the key back.
+
 
 Getting a New Cert
 ------------------

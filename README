@@ -62,6 +62,10 @@ If you renew a hostcert containing an e-mail address, the renewed certificate
 will not contain one. This is a feature, not a bug (DNs containing an e-mail
 address are no-longer supported by most grid middleware).
 
+Newly generated keys are automatically converted into PKCS#1 format when they
+are created. This is to maintian compatibility with the majority of grid
+middleware.
+
 
 Bugs
 ----
