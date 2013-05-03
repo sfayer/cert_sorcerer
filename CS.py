@@ -718,11 +718,13 @@ class CS_UI:
 
 def print_help():
   print "Cert Sorcerer, Version: 1.0.1"
-  print "Usage: CS.py [--batch] <cn of user or server>"
-  print "   Or: CS.py [--batch] --sys"
+  print "Usage: CS.py [--batch[-all]] <cn of user or server>"
+  print "   Or: CS.py [--batch[-all]] --sys"
   print ""
   print "The --sys option means operate on this machine's hostcert directly."
   print "The --batch options makes y/n prompts assume yes. Use with caution."
+  print "            This will still prompt to start a new renewal."
+  print "The --batch-all is like batch mode, but enables promptless renewal."
   print ""
   sys.exit(0)
 
@@ -730,10 +732,12 @@ def print_help():
 if __name__ == "__main__":
   syscert = False
   batch = False
+  batch_all = False
 
   # Process command line args
   try:
-    optlist, args = getopt.getopt(sys.argv[1:], '', [ 'sys', 'batch', 'help' ])
+    optlist, args = getopt.getopt(sys.argv[1:], '',
+                                  [ 'sys', 'batch', 'batch-all', 'help' ])
   except getopt.GetoptError, err:
     print str(err)
     print_help()
@@ -743,6 +747,9 @@ if __name__ == "__main__":
       syscert = True
     elif opt[0] == "--batch":
       batch = True
+    elif opt[0] == "--batch-all":
+      batch = True
+      batch_all = True
     elif opt[0] == "--help":
       print_help()
 
@@ -786,6 +793,10 @@ if __name__ == "__main__":
                        "check for updates now", batch)
     CS_UI.fetch_cert(store, hostcert, syscert)
   elif state == CS_Const.Complete:
+    if batch and not batch_all:
+      print "Certificate already signed, "
+            "use --batch-all to start a new renewal in batch mode."
+      sys.exit(0)
     CS_UI.confirm_user("This certificate has been previously signed, "
                        "start a renewal", batch)
     CS_UI.renew_cert(store, cn, hostcert)
