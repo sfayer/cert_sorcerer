@@ -55,7 +55,6 @@ chown 700 ~/.cs/john_smith
 cp my_user_cert.pem ~/.cs/john_smith/cert.pem
 cp my_user_key.pem ~/.cs/john_smith/key.pem
 
-
 This also works for hostcerts:
 mkdir -p ~/.cs/myhost.some.domain.com
 chown 700 ~/.cs/myhost.some.domain.com
@@ -65,6 +64,11 @@ cp hostkey.pem ~/.cs/myhost.some.domain.com/key.pem
 If you certificate is in .p12 format, replace the cp steps in the above with:
 openssl pkcs12 -nocerts -nodes -in mycert.p12 -out ~/.cs/john_smith/key.pem
 openssl pkcs12 -clcerts -nokeys -in mycert.p12 -out ~/.cs/john_smith/cert.pem
+
+CS will fix the permissions automatically however you can optionally do this by
+hand just to ensure things are secure:
+chmod 644 ~/.cs/john_smith/cert.pem
+chmod 600 ~/.cs/john_smith/key.pem
 
 
 Renewing A Certificate
