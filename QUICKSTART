@@ -36,7 +36,8 @@ the actual machine as root (or whoever owns /etc/grid-security/hostkey.pem):
 ./CS.py --sys
 
 Once you get an e-mail from the CA saying the cert has been issued, run the
-"./CS.py --sys" command again to fetch it.
+"./CS.py --sys" command again to fetch it. You can use "./CS.py --sys --fetch"
+to avoid being prompted for this operation.
 
 Host certificate renewals don't require a valid user key.
 
