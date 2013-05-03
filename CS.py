@@ -718,13 +718,13 @@ class CS_UI:
 
 def print_help():
   print "Cert Sorcerer, Version: 1.0.1"
-  print "Usage: CS.py [--batch[-all]] <cn of user or server>"
-  print "   Or: CS.py [--batch[-all]] --sys"
+  print "Usage: CS.py [--batch] [--fetch] <cn of user or server>"
+  print "   Or: CS.py [--batch] [--fetch] --sys"
   print ""
-  print "The --sys option means operate on this machine's hostcert directly."
-  print "The --batch options makes y/n prompts assume yes. Use with caution."
-  print "            This will still prompt to start a new renewal."
-  print "The --batch-all is like batch mode, but enables promptless renewal."
+  print "Option meanings:"
+  print "  --sys -- Operate on this machine's hostcert directly."
+  print "  --fetch -- Don't prompt for fetching certificates from the CA."
+  print "  --batch -- Make y/n prompts assume yes. Use with caution."
   print ""
   sys.exit(0)
 
@@ -732,12 +732,12 @@ def print_help():
 if __name__ == "__main__":
   syscert = False
   batch = False
-  batch_all = False
+  fetch = False
 
   # Process command line args
   try:
     optlist, args = getopt.getopt(sys.argv[1:], '',
-                                  [ 'sys', 'batch', 'batch-all', 'help' ])
+                                  [ 'sys', 'batch', 'fetch', 'help' ])
   except getopt.GetoptError, err:
     print str(err)
     print_help()
@@ -747,9 +747,8 @@ if __name__ == "__main__":
       syscert = True
     elif opt[0] == "--batch":
       batch = True
-    elif opt[0] == "--batch-all":
-      batch = True
-      batch_all = True
+    elif opt[0] == "--fetch":
+      fetch = True
     elif opt[0] == "--help":
       print_help()
 
@@ -785,17 +784,21 @@ if __name__ == "__main__":
   # Decide what to do based on the current state:
   state = store.get_state()
   if state == CS_Const.Nothing:
+    if fetch:
+      print "No existing data about this request, " \
+            "run again without --fetch to continue."
+      sys.exit(0)
     CS_UI.confirm_user("There is no local data about this DN, "
                        "request a new cert", batch)
     CS_UI.new_cert(store, cn, hostcert)
   elif state == CS_Const.CSR:
     CS_UI.confirm_user("This cert is pending with the CA, "
-                       "check for updates now", batch)
+                       "check for updates now", fetch or batch)
     CS_UI.fetch_cert(store, hostcert, syscert)
   elif state == CS_Const.Complete:
-    if batch and not batch_all:
-      print "Certificate already signed, "
-            "use --batch-all to start a new renewal in batch mode."
+    if fetch:
+      print "Certificate already signed, " \
+            "run again without --fetch to continue."
       sys.exit(0)
     CS_UI.confirm_user("This certificate has been previously signed, "
                        "start a renewal", batch)
