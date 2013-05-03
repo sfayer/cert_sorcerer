@@ -2,6 +2,8 @@ Version 1.0.3 - Not Released Yet
  - Fix getopt errors running with RHEL5.
  - Set permissions on certs & keys in store if they look wrong.
  - Added safer --fetch option which will only automate fetching certs.
+ - Use different fields in CA interface to get cert as old method will
+   stop working next week.
 
 Version 1.0.2 - 01/05/2013
  - Ensure private key is in PKCS#1 format.
