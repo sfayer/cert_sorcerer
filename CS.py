@@ -717,7 +717,7 @@ if __name__ == "__main__":
   # Process command line args
   try:
     optlist, args = getopt.getopt(sys.argv[1:], '', [ 'sys', 'batch', 'help' ])
-  except getopt.GetoptError as err:
+  except getopt.GetoptError, err:
     print str(err)
     print_help()
 
