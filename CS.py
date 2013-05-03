@@ -70,6 +70,10 @@ CS_DEF_URL = "https://cwiz-live.ca.ngs.ac.uk:443/%s"
 CS_DEF_VERSION = "CertWizard 0.6.1"
 CS_DEF_HOSTCERT = "/etc/grid-security/hostcert.pem"
 CS_DEF_HOSTKEY = "/etc/grid-security/hostkey.pem"
+CS_DEF_CERTPERMS = 0644
+CS_DEF_KEYPERMS = 0600
+CS_DEF_CSRPERMS = 0600
+CS_DEF_STOREPERMS = 0700
 
 # We store the full CA Chain here!
 # This will get written out to the store directory
@@ -150,11 +154,21 @@ class CS_StoredCert:
                   }
     # Create the cert store if needed
     if not os.path.exists(path):
-      os.makedirs(path, 0700)
+      os.makedirs(path, CS_DEF_STOREPERMS)
     if not os.path.exists(self._paths[CS_Const.CA_FILE]):
       self.write(CS_Const.CA_FILE, CS_DEF_CACHAIN)
     if not os.path.exists(hostpath):
-      os.mkdir(hostpath, 0700)
+      os.mkdir(hostpath, CS_DEF_STOREPERMS)
+    # If the user has imported some new certs by hand,
+    #  there may be some permissions problems to fix
+    # We only expect imports of CERT and KEY
+    # Any other problems the user should fix manually!
+    if os.path.exists(self._paths[CS_Const.CERT_FILE]):
+      if not os.access(self._paths[CS_Const.CERT_FILE], os.R_OK | os.W_OK):
+        os.chmod(self._paths[CS_Const.CERT_FILE], CS_DEF_CERTPERMS)
+    if os.path.exists(self._paths[CS_Const.KEY_FILE]):
+      if not os.access(self._paths[CS_Const.KEY_FILE], os.R_OK | os.W_OK):
+        os.chmod(self._paths[CS_Const.KEY_FILE], CS_DEF_KEYPERMS)
     # Work out the current state
     self.update()
 
@@ -166,12 +180,15 @@ class CS_StoredCert:
       return
     # Import the system certificates
     # But don't overwrite or we'll lose the new key!!!
+    # Also patch the permissions to known-good ones on import
     if os.path.exists(CS_DEF_HOSTCERT):
       if not os.path.exists(self._paths[CS_Const.CERT_FILE]):
         shutil.copy(CS_DEF_HOSTCERT, self._paths[CS_Const.CERT_FILE])
+        os.chmod(self._paths[CS_Const.CERT_FILE], CS_DEF_CERTPERMS)
     if os.path.exists(CS_DEF_HOSTKEY):
       if not os.path.exists(self._paths[CS_Const.KEY_FILE]):
         shutil.copy(CS_DEF_HOSTKEY, self._paths[CS_Const.KEY_FILE])
+        os.chmod(self._paths[CS_Const.KEY_FILE], CS_DEF_KEYPERMS)
     self.update()
 
   def update(self):
@@ -184,13 +201,13 @@ class CS_StoredCert:
     if os.path.exists(self._paths[CS_Const.CERT_FILE]):
       self._state = CS_Const.Complete
 
-  def write(self, file_type, key, perms = 0600):
+  def write(self, file_type, data, perms = CS_DEF_KEYPERMS):
     """ (Over)write a file to the store. """
     fd = os.open(self._paths[file_type],
                  os.O_WRONLY | os.O_TRUNC | os.O_CREAT,
                  perms)
     file_out = os.fdopen(fd, "w")
-    file_out.write(key)
+    file_out.write(data)
     file_out.close()
     self.update()
 
@@ -290,8 +307,8 @@ class CS_CertTools:
     key_pem = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
     csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr)
     # Write them out to the store
-    store.write(CS_Const.KEY_FILE, key_pem)
-    store.write(CS_Const.CSR_FILE, csr_pem)
+    store.write(CS_Const.KEY_FILE, key_pem, CS_DEF_KEYPERMS)
+    store.write(CS_Const.CSR_FILE, csr_pem, CS_DEF_CSRPERMS)
     # Just to be 100% sure everything is compabile...
     # ... Ensure the key is in PKCS#1 format
     CS_CertTools.pkcs8_to_pkcs1(store.get_path(CS_Const.KEY_FILE))
@@ -631,7 +648,7 @@ class CS_UI:
       return
     print "Cert ID is: %d. Fetching..." % certid
     certpem = CS_RemoteCA.get_cert(certid, store.get_path(CS_Const.CA_FILE))
-    store.write(CS_Const.CERT_FILE, certpem, 0644)
+    store.write(CS_Const.CERT_FILE, certpem, CS_DEF_CERTPERMS)
     print "Completed."
     cert = store.get_path(CS_Const.CERT_FILE)
     key = store.get_path(CS_Const.KEY_FILE)
