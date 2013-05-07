@@ -1,4 +1,4 @@
-Version 1.0.3 - Not Released Yet
+Version 1.0.3 - 07/05/2013
  - Fix getopt errors running with RHEL5.
  - Set permissions on certs & keys in store if they look wrong.
  - Added safer --fetch option which will only automate fetching certs.

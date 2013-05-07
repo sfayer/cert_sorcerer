@@ -2,14 +2,14 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.0.2
+Version:        1.0.3
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
 License:        GPLv3
 URL:            https://github.com/sfayer/cert_sorcerer
-Source0:        https://raw.github.com/sfayer/cert_sorcerer/master/CS.py
-Source1:        https://raw.github.com/sfayer/cert_sorcerer/master/README
+Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_3/CS.py
+Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_3/README
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Requires:       openssl python python-pycurl pyOpenSSL
@@ -40,6 +40,10 @@ rm -rf %{buildroot}
 %doc README
 
 %changelog
+* Wed May 07 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.3-1
+- Use slightly modified interface to fetch certs.
+- New --fetch option to make fetching certs safer in batch mode.
+
 * Wed May 01 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.2-1
 - Ensure private key is kept in PKCS#1 format.
 - Other minor fixes.

@@ -17,7 +17,7 @@
 # Copyright 2013, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.0.3-alpha
+    Version 1.0.3
 """
 
 import os
