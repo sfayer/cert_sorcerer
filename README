@@ -80,11 +80,11 @@ Internals
 
 The way this tool works is fairly straightforward. While it should clean-up
 automatically after a crash, there may be a few instances where things are left
-in an inconstant state. If this happens to you, please report it as a bug. No
+in an inconsistent state. If this happens to you, please report it as a bug. No
 custom files are written by CS, so you should be able to recover from any state
 by moving files around.
 
-A hierarchy if created in the store directory (~/.cs) by default. For a hostcert
+A hierarchy is created in the store directory (~/.cs) by default. For a hostcert
 this looks like the following:
 
 ~/.cs/myhost.domain.name/key.pem - The key
@@ -106,7 +106,7 @@ The UK eScience CA seems to have its own web-service for requesting certificates
 This is predominately based around posting XML documents via HTTP. The required
 subset of these requests can be seen/inferred from the CS_RemoteCA class.
 
-The CA also seems to have it's own authentication scheme called PPPK. This works
+The CA also seems to have its own authentication scheme called PPPK. This works
 by adding a few challenge headers into the initial HTTP transaction, which will
 then return HTTP 401. The client then calculates a response and re-sends the
 request with a new response header (hopefully resulting in a HTTP 200). The core
