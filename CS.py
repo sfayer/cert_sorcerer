@@ -641,7 +641,10 @@ class CS_UI:
             "these in your home dir by running:"
       print "mkdir -p ~/.globus"
       print "cp %s ~/.globus/usercert.pem" % cert
-      print "cp %s ~/.globus/userkey.pem" % key
+      print ""
+      print "For a user cert, you should add a password to the " \
+            "private key at the same time:"
+      print "openssl rsa -in %s -out ~/.globus/userkey.pem -des3" % key
       print ""
       print "You may also want to create a .p12 file to import into " \
             "your browser by running:"
