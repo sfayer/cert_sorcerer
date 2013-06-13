@@ -698,7 +698,7 @@ class CS_UI:
 
 
 def print_help():
-  print "Cert Sorcerer, Version: 1.0.1"
+  print "Cert Sorcerer"
   print "Usage: CS.py [--batch] [--fetch] <cn of user or server>"
   print "   Or: CS.py [--batch] [--fetch] --sys"
   print ""
