@@ -50,7 +50,7 @@ it into the ~/.cs directory under a directory named after the CN. Any spaces in
 the CN should be replaced with underscores.
 
 mkdir -p ~/.cs/john_smith
-chown 700 ~/.cs/john_smith
+chmod 700 ~/.cs/john_smith
 
 # Copy the old certificate & key into the directory
 cp my_user_cert.pem ~/.cs/john_smith/cert.pem
@@ -58,7 +58,7 @@ cp my_user_key.pem ~/.cs/john_smith/key.pem
 
 This also works for hostcerts:
 mkdir -p ~/.cs/myhost.some.domain.com
-chown 700 ~/.cs/myhost.some.domain.com
+chmod 700 ~/.cs/myhost.some.domain.com
 cp hostcert.pem ~/.cs/myhost.some.domain.com/cert.pem
 cp hostkey.pem ~/.cs/myhost.some.domain.com/key.pem
 
