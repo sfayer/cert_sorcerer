@@ -1,4 +1,5 @@
-Version 1.0.4 - Not released yet
+Version 1.0.4 - 15/06/2013
+ - Minor fixes to code style & documentation.
 
 Version 1.0.3 - 07/05/2013
  - Fix getopt errors running with RHEL5.

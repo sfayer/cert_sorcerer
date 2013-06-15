@@ -40,8 +40,8 @@ rm -rf %{buildroot}
 %doc README
 
 %changelog
-* Wed May 07 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.4-1
-- Nothing yet!
+* Sat Jun 15 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.4-1
+- Minor updates to the code style and documentation.
 
 * Wed May 07 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.3-1
 - Use slightly modified interface to fetch certs.
