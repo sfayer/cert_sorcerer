@@ -354,7 +354,8 @@ class CS_CertTools:
     p = Popen(ssl_cmd, stdout = PIPE)
     key_info, _ = p.communicate()
     if (p.returncode != 0):
-      raise Exception("Failed to get private exponent from openssl... Bad passphrase?")
+      raise Exception("Failed to get private exponent from openssl... " \
+                      "Bad passphrase?")
     # Get just the private exponent from the text
     key_split = key_info.split("privateExponent:\n")[1]
     key_split = key_split.split("\nprime1:")[0]
@@ -701,6 +702,7 @@ class CS_UI:
 
 
 def print_help():
+  """ Print the usage information for the program and exit. """
   print "Cert Sorcerer"
   print "Usage: CS.py [--batch] [--fetch] <cn of user or server>"
   print "   Or: CS.py [--batch] [--fetch] --sys"
