@@ -776,6 +776,15 @@ if __name__ == "__main__":
       sys.exit(0)
     CS_UI.confirm_user("There is no local data about this DN, "
                        "request a new cert", batch)
+    # Check that a usercert and key are accessible for the request if it's
+    # for a hostcert...
+    if hostcert and ((not os.access(CS_DEF_CERT, os.R_OK))
+                       or (not os.access(CS_DEF_KEY, os.R_OK))):
+      print "A valid usercert & key must be installed at the following " \
+            "paths to request a new hostcert:"
+      print "%s" % CS_DEF_CERT
+      print "%s" % CS_DEF_KEY
+      sys.exit(1)
     CS_UI.new_cert(store, cn, hostcert)
   elif state == CS_Const.CSR:
     CS_UI.confirm_user("This cert is pending with the CA, "
