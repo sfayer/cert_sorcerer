@@ -2,14 +2,14 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.0.5
+Version:        1.0.6
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
 License:        GPLv3
 URL:            https://github.com/sfayer/cert_sorcerer
-Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_5/CS.py
-Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_5/README
+Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/CS.py
+Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/README
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Requires:       openssl python python-pycurl pyOpenSSL
@@ -40,8 +40,11 @@ rm -rf %{buildroot}
 %doc README
 
 %changelog
-* Sat Jun 15 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.5-1
-- Nothing yet!
+* Fri Jun 28 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.6-1
+- Nothing yet.
+
+* Thu Jun 27 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.5-1
+- Improve error message if usercert is missing.
 
 * Sat Jun 15 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.4-1
 - Minor updates to the code style and documentation.
