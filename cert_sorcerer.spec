@@ -10,6 +10,9 @@ License:        GPLv3
 URL:            https://github.com/sfayer/cert_sorcerer
 Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/CS.py
 Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/README
+Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/NOTES
+Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/QUICKSTART
+Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/COPYING
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Requires:       openssl python python-pycurl pyOpenSSL
@@ -20,6 +23,9 @@ You should customise this package with your various local parameters.
 
 %prep
 cp %{SOURCE1} README
+cp %{SOURCE2} NOTES
+cp %{SOURCE3} QUICKSTART
+cp %{SOURCE4} COPYING
 
 %build
 
@@ -37,7 +43,7 @@ rm -rf %{buildroot}
 %files
 %defattr(-,root,root,-)
 %{_bindir}/CS.py*
-%doc README
+%doc README NOTES QUICKSTART COPYING
 
 %changelog
 * Fri Jun 28 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.6-1
