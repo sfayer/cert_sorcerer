@@ -1,5 +1,5 @@
 Version 1.0.6 - Not released yet.
- - No changes yet!
+ - Print full DN before prompting the user.
 
 Version 1.0.5 - 27/06/2013
  - Improved error message when userkey is missing while trying to get a
