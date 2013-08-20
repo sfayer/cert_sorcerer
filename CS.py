@@ -757,10 +757,12 @@ if __name__ == "__main__":
   cn = cn.lower()
 
   # Tell the user how we've interpreted their input
+  dn = "OU=%s,L=%s,O=%s,C=%s" % (CS_DEF_RA_OU, CS_DEF_RA_L,
+                                 CS_DEF_CA_O, CS_DEF_CA_C)
   if hostcert:
-    print 'Processing HOST cert with "CN=%s"...' % cn
+    print 'Processing HOST cert with "CN=%s" (%s).' % (cn, dn)
   else:
-    print 'Processing USER cert with "CN=%s"...' % cn
+    print 'Processing USER cert with "CN=%s" (%s).' % (cn, dn)
 
   store = CS_StoredCert(CS_DEF_STORE, cn)
   if syscert:
