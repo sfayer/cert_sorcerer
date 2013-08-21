@@ -651,7 +651,7 @@ class CS_UI:
             "your browser by running:"
       print "openssl pkcs12 -export -in %s -inkey %s -out gridcert.p12" \
               % (cert, key)
-      print "chown 600 gridcert.p12"
+      print "chmod 600 gridcert.p12"
       print ""
     if syscert:
       print ""

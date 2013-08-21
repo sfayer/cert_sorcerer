@@ -48,6 +48,7 @@ rm -rf %{buildroot}
 %changelog
 * Fri Jun 28 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.6-1
 - Print full DN before prompting the user.
+- Fixed typo in p12 instructions (chown -> chmod).
 
 * Thu Jun 27 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.5-1
 - Improve error message if usercert is missing.
