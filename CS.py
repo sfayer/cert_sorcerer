@@ -136,7 +136,7 @@ class CS_StoredCert:
   def __init__(self, path, cn):
     """ Initialise the store, creating the required directory structure. """
     real_cn = cn.replace(" ", "_") # Make paths without spaces
-    real_cn = cn.replace("/", "_") # Also convert "/" chars
+    real_cn = real_cn.replace("/", "_") # Also convert "/" chars
     self._path = path
     self._cn = real_cn
     hostpath = os.path.join(path, real_cn)
