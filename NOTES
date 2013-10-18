@@ -1,4 +1,5 @@
 Version 1.0.6 - Not released yet.
+ - Support for DNs containing "/".
  - Print full DN before prompting the user.
  - Fixed typo in p12 instructions (chown -> chmod).
 
