@@ -2,17 +2,17 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.0.6
+Version:        1.0.7
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
 License:        GPLv3
 URL:            https://github.com/sfayer/cert_sorcerer
-Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/CS.py
-Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/README
-Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/NOTES
-Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/QUICKSTART
-Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_6/COPYING
+Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/CS.py
+Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/README
+Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/NOTES
+Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/QUICKSTART
+Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/COPYING
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Requires:       openssl python python-pycurl pyOpenSSL
@@ -46,6 +46,9 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
+* Fri Aug 29 2014 Simon Fayer <sf105@ic.ac.uk> - 1.0.7-1
+- No changes yet!
+
 * Fri Jun 28 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.6-1
 - Support for DNs containing "/".
 - Print full DN before prompting the user.
@@ -58,7 +61,7 @@ rm -rf %{buildroot}
 * Sat Jun 15 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.4-1
 - Minor updates to the code style and documentation.
 
-* Wed May 07 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.3-1
+* Tue May 07 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.3-1
 - Use slightly modified interface to fetch certs.
 - New --fetch option to make fetching certs safer in batch mode.
 
