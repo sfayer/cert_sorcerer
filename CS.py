@@ -17,8 +17,9 @@
 # Copyright 2013, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.0.6a (development version)
+    Version 1.0.6
 """
+VERSION = "CertSorcerer 1.0.6"
 
 import os
 import sys
@@ -67,7 +68,7 @@ CS_DEF_OCERTNAME = "cert.pem.old"
 CS_DEF_OKEYNAME = "key.pem.old"
 CS_DEF_CANAME = "ca.pem"
 CS_DEF_URL = "https://cwiz-live.ca.ngs.ac.uk:443/%s"
-CS_DEF_VERSION = "CertWizard 0.6.1"
+CS_DEF_VERSION = VERSION
 CS_DEF_HOSTCERT = "/etc/grid-security/hostcert.pem"
 CS_DEF_HOSTKEY = "/etc/grid-security/hostkey.pem"
 CS_DEF_CERTPERMS = 0644
