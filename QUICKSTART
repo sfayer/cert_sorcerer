@@ -83,3 +83,4 @@ same parameters you did originally, i.e.
 If the certificate wasn't originally requested with CS, follow the importing a
 certificate step and then invoke it with the CN as contained in the cert.
 
+Run the command again once you have received e-mail confirmation of the renewal.
