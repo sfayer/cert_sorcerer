@@ -17,9 +17,9 @@
 # Copyright 2013, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.0.7a (Development Version)
+    Version 1.0.7
 """
-VERSION = "CertSorcerer 1.0.7a"
+VERSION = "CertSorcerer 1.0.7"
 
 import os
 import sys
@@ -276,6 +276,7 @@ class CS_CertTools:
   def create_csr(store,
                  dn_cn,
                  hostcert,
+                 sans = None,
                  dn_ou = CS_DEF_RA_OU,
                  dn_l = CS_DEF_RA_L,
                  dn_o = CS_DEF_CA_O,
@@ -300,10 +301,12 @@ class CS_CertTools:
     dn.C = dn_c
     # Create the relevant extension
     if hostcert:
-      ext_details = "email:DNS: %s" % dn_cn
+      ext_details = ["DNS:%s" % dn_cn]
     else:
-      ext_details = "email:%s" % email
-    ext = X509Extension("subjectAltName", False, ext_details)
+      ext_details = ["email:%s" % email]
+    if sans:
+      ext_details.extend(sans)
+    ext = X509Extension("subjectAltName", False, ','.join(ext_details))
     csr.add_extensions([ext])
     csr.sign(key, "md5")
     # Convert the CSR & KEY to PEM files
@@ -582,7 +585,7 @@ class CS_UI:
         break
 
   @staticmethod
-  def new_cert(store, cn, hostcert):
+  def new_cert(store, cn, hostcert, sans):
     """ Get a new cert from the CA. """
     if hostcert:
       userpin = CS_DEF_PINHASH
@@ -598,7 +601,7 @@ class CS_UI:
                             "e-mail address: ")
       CS_UI.confirm_user("Now ready to create & send request, continue")
     print "Generating keys..."
-    CS_CertTools.create_csr(store, cn, hostcert)
+    CS_CertTools.create_csr(store, cn, hostcert, sans)
     print "Sending CSR to CA..."
     csrpem = store.read(CS_Const.CSR_FILE)
     try:
@@ -706,13 +709,16 @@ class CS_UI:
 def print_help():
   """ Print the usage information for the program and exit. """
   print "Cert Sorcerer"
-  print "Usage: CS.py [--batch] [--fetch] <cn of user or server>"
-  print "   Or: CS.py [--batch] [--fetch] --sys"
+  print "Usage: CS.py [--batch] [--fetch] [--san <san>] <cn of user or server>"
+  print "   Or: CS.py [--batch] [--fetch] [--san <san>] --sys"
   print ""
   print "Option meanings:"
   print "  --sys -- Operate on this machine's hostcert directly."
   print "  --fetch -- Don't prompt for fetching certificates from the CA."
   print "  --batch -- Make y/n prompts assume yes. Use with caution."
+  print "  --san <san> -- Adds SubjectAlternativeNames to new requests,"
+  print "                 <san> should be in the format 'DNS:other.domain',"
+  print "                 Only valid for new requests (ignored otherwise)."
   print ""
   sys.exit(0)
 
@@ -721,11 +727,12 @@ if __name__ == "__main__":
   syscert = False
   batch = False
   fetch = False
+  sans = []
 
   # Process command line args
   try:
     optlist, args = getopt.getopt(sys.argv[1:], '',
-                                  [ 'sys', 'batch', 'fetch', 'help' ])
+                                  [ 'sys', 'batch', 'fetch', 'san=', 'help' ])
   except getopt.GetoptError, err:
     print str(err)
     print_help()
@@ -737,6 +744,11 @@ if __name__ == "__main__":
       batch = True
     elif opt[0] == "--fetch":
       fetch = True
+    elif opt[0] == "--san":
+      san_value = opt[1]
+      if not ':' in san_value:
+        san_value = "DNS:%s" % san_value
+      sans.append(san_value)
     elif opt[0] == "--help":
       print_help()
 
@@ -789,7 +801,7 @@ if __name__ == "__main__":
       print "%s" % CS_DEF_CERT
       print "%s" % CS_DEF_KEY
       sys.exit(1)
-    CS_UI.new_cert(store, cn, hostcert)
+    CS_UI.new_cert(store, cn, hostcert, sans)
   elif state == CS_Const.CSR:
     CS_UI.confirm_user("This cert is pending with the CA, "
                        "check for updates now", fetch or batch)
@@ -799,6 +811,11 @@ if __name__ == "__main__":
       print "Certificate already signed, " \
             "run again without --fetch to continue."
       sys.exit(0)
+    if sans:
+      print "ERROR: SANs can't be used with renewal.\n" \
+            "To 'renew' SAN certificates, delete the local data and \n" \
+            "start the request from scratch."
+      sys.exit(1)
     CS_UI.confirm_user("This certificate has been previously signed, "
                        "start a renewal", batch)
     CS_UI.renew_cert(store, cn, hostcert)

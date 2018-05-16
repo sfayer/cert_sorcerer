@@ -46,8 +46,8 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
-* Fri Aug 29 2014 Simon Fayer <sf105@ic.ac.uk> - 1.0.7-1
-- No changes yet!
+* Wed May 16 2018 Simon Fayer <sf105@ic.ac.uk> - 1.0.7-1
+- Add support for extra SAN values in certificates.
 
 * Fri Jun 28 2013 Simon Fayer <sf105@ic.ac.uk> - 1.0.6-1
 - Support for DNs containing "/".

@@ -1,4 +1,7 @@
-Version 1.0.6 - Not released yet.
+Version 1.0.7 - 16/05/2018
+ - Add support for extra SAN values in certificates.
+
+Version 1.0.6 - 29/08/2014
  - Support for DNs containing "/".
  - Print full DN before prompting the user.
  - Fixed typo in p12 instructions (chown -> chmod).
