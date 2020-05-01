@@ -2,18 +2,18 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.0.8
+Version:        1.0.9
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
 License:        GPLv3
 URL:            https://github.com/sfayer/cert_sorcerer
-Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/CS.py30
-Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/CS.py27
-Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/README
-Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/NOTES
-Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/QUICKSTART
-Source5:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/COPYING
+Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_9/CS.py30
+Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_9/CS.py27
+Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_9/README
+Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_9/NOTES
+Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_9/QUICKSTART
+Source5:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_9/COPYING
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 %if 0%{?rhel} >= 8
