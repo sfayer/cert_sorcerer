@@ -1,33 +1,3 @@
-Version 1.0.7 - 16/05/2018
- - Add support for extra SAN values in certificates.
-
-Version 1.0.6 - 29/08/2014
- - Support for DNs containing "/".
- - Print full DN before prompting the user.
- - Fixed typo in p12 instructions (chown -> chmod).
-
-Version 1.0.5 - 27/06/2013
- - Improved error message when userkey is missing while trying to get a
-   new hostcert.
-
-Version 1.0.4 - 15/06/2013
- - Minor fixes to code style & documentation.
-
-Version 1.0.3 - 07/05/2013
- - Fix getopt errors running with RHEL5.
- - Set permissions on certs & keys in store if they look wrong.
- - Added safer --fetch option which will only automate fetching certs.
- - Use different fields in CA interface to get cert as old method will
-   stop working next week.
-
-Version 1.0.2 - 01/05/2013
- - Ensure private key is in PKCS#1 format.
- - Set cert permissions 0644 for simplicity.
-
-Version 1.0.1 - 01/05/2013
- - Added batch option.
- - Minor improvements.
-
-Version 1.0.0 - 26/04/2013
- - Initial version.
+See changlog in RPM cert_sorcerer.spec file
+(or installed package, rpm --changelog -q cert_sorcerer).
 

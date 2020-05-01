@@ -8,24 +8,29 @@ Summary:        A tool for requesting certificates
 Group:          Applications/Internet
 License:        GPLv3
 URL:            https://github.com/sfayer/cert_sorcerer
-Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/CS.py
-Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/README
-Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/NOTES
-Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/QUICKSTART
-Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_7/COPYING
+Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/CS.py30
+Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/CS.py27
+Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/README
+Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/NOTES
+Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/QUICKSTART
+Source5:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_8/COPYING
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+%if 0%{?rhel} >= 8
+Requires:       openssl python3 python3-pycurl python3-pyOpenSSL
+%else
 Requires:       openssl python python-pycurl pyOpenSSL
+%endif
 
 %description
 Cert Sorcerer is a tool for requestion certificates from a CA web-service.
 You should customise this package with your various local parameters.
 
 %prep
-cp %{SOURCE1} README
-cp %{SOURCE2} NOTES
-cp %{SOURCE3} QUICKSTART
-cp %{SOURCE4} COPYING
+cp %{SOURCE2} README
+cp %{SOURCE3} NOTES
+cp %{SOURCE4} QUICKSTART
+cp %{SOURCE5} COPYING
 
 %build
 
@@ -33,7 +38,11 @@ cp %{SOURCE4} COPYING
 rm -Rf %{buildroot}
 # Install binary
 mkdir -p %{buildroot}%{_bindir}
+%if 0%{?rhel} >= 8
 cp %{SOURCE0} %{buildroot}%{_bindir}/CS.py
+%else
+cp %{SOURCE1} %{buildroot}%{_bindir}/CS.py
+%endif
 chmod 755 %{buildroot}%{_bindir}/CS.py
 
 %clean
@@ -42,10 +51,13 @@ rm -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%{_bindir}/CS.py*
+%{_bindir}/CS.py
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
+* Fri May 01 2020 Simon Fayer <sf105@ic.ac.uk> - 1.0.8-1
+- Add support for python3 (CentOS8).
+
 * Wed May 16 2018 Simon Fayer <sf105@ic.ac.uk> - 1.0.7-1
 - Add support for extra SAN values in certificates.
 

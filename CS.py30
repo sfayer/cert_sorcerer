@@ -1,4 +1,4 @@
-#!/usr/bin/python -W ignore::DeprecationWarning
+#!/usr/bin/env python3
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,9 @@
 # Copyright 2013, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.0.8a (Development Version)
+    Version 1.0.8
 """
-VERSION = "CertSorcerer 1.0.8a"
+VERSION = "CertSorcerer 1.0.8"
 
 import os
 import sys
@@ -28,15 +28,13 @@ import getopt
 import shutil
 import pycurl
 import socket
-import StringIO
+import binascii
+from io import BytesIO
+from hashlib import sha1
 from xml.dom import minidom
 from subprocess import Popen, PIPE
 from OpenSSL import crypto
 from OpenSSL.crypto import X509Req, X509Extension, PKey
-
-# We need sha on RHEL5, but it's depreciated on RHEL6
-# The warning is hidden by the default command line
-import sha
 
 # Default Settings
 ## Domain name to append to non-qualified hostnames
@@ -50,7 +48,8 @@ CS_DEF_CA_O = "eScience"
 CS_DEF_CA_C = "UK"
 CS_DEF_KEYBITS = 2048
 # SHA1 of the PIN you check with the RA (for hostcerts)
-CS_DEF_PINHASH = sha.new("mypin").hexdigest()
+# We default this to the hash of "mypin"
+CS_DEF_PINHASH = "7dd1d706734923606b1483189a112ce2b2f3c644"
 # Cert Store: This is where the certificates are put... Keep them safe!
 CS_DEF_STORE = os.path.expanduser("~/.cs")
 # The keys to use when talking to the CA (to ask for a new hostcert)
@@ -71,10 +70,10 @@ CS_DEF_URL = "https://cwiz-live.ca.ngs.ac.uk:443/%s"
 CS_DEF_VERSION = VERSION
 CS_DEF_HOSTCERT = "/etc/grid-security/hostcert.pem"
 CS_DEF_HOSTKEY = "/etc/grid-security/hostkey.pem"
-CS_DEF_CERTPERMS = 0644
-CS_DEF_KEYPERMS = 0600
-CS_DEF_CSRPERMS = 0600
-CS_DEF_STOREPERMS = 0700
+CS_DEF_CERTPERMS = 0o644
+CS_DEF_KEYPERMS = 0o600
+CS_DEF_CSRPERMS = 0o600
+CS_DEF_STOREPERMS = 0o700
 
 # We store the full CA Chain here!
 # This will get written out to the store directory
@@ -210,7 +209,7 @@ class CS_StoredCert:
                  os.O_WRONLY | os.O_TRUNC | os.O_CREAT,
                  perms)
     file_out = os.fdopen(fd, "w")
-    file_out.write(data)
+    file_out.write(data.decode("ascii"))
     file_out.close()
     self.update()
 
@@ -306,7 +305,9 @@ class CS_CertTools:
       ext_details = ["email:%s" % email]
     if sans:
       ext_details.extend(sans)
-    ext = X509Extension("subjectAltName", False, ','.join(ext_details))
+    ext_str = ",".join(ext_details)
+    ext_str = ext_str.encode("ascii")
+    ext = X509Extension(b"subjectAltName", False, ext_str)
     csr.add_extensions([ext])
     csr.sign(key, "md5")
     # Convert the CSR & KEY to PEM files
@@ -333,6 +334,7 @@ class CS_CertTools:
                "-noout" ]
     p = Popen(ssl_cmd, stdout = PIPE, stderr = PIPE)
     key, _ = p.communicate()
+    key = key.decode("ascii")
     # Remove the guards from the key to get a plain base64 string
     key = key.replace("\n", "")
     key = key.replace("-----BEGIN PUBLIC KEY-----", "")
@@ -358,6 +360,7 @@ class CS_CertTools:
     ssl_cmd = ["openssl", "rsa", "-in", keyfile, "-text", "-noout" ]
     p = Popen(ssl_cmd, stdout = PIPE)
     key_info, _ = p.communicate()
+    key_info = key_info.decode("ascii")
     if (p.returncode != 0):
       raise Exception("Failed to get private exponent from openssl... " \
                       "Bad passphrase?")
@@ -379,11 +382,13 @@ class CS_CertTools:
     ssl_cmd = ["openssl", "x509", "-in", certfile, "-modulus", "-noout" ]
     p = Popen(ssl_cmd, stdout = PIPE)
     cert_info, _ = p.communicate()
+    cert_info = cert_info.decode("ascii")
     modulus = cert_info.split("=")[1].strip().lower()
     # We also need the exponent
     ssl_cmd = ["openssl", "x509", "-in", certfile, "-text", "-noout" ]
     p = Popen(ssl_cmd, stdout = PIPE)
     cert_info, _ = p.communicate()
+    cert_info = cert_info.decode("ascii")
     exponent = cert_info.split("Exponent:")[1]
     exponent = exponent.split("(")[1]
     exponent = exponent.split(")")[0]
@@ -399,7 +404,7 @@ class CS_CertTools:
     if not len(key_split) == 2:
       raise Exception("Unexpected keyid format from CA.")
     return_nonce = "%s:%u" % (nonce, time.time())
-    return_nonce = return_nonce.lower().encode("hex")
+    return_nonce = binascii.hexlify(return_nonce.lower().encode("ascii"))
     modulus = int(key_split[0], 16)
     base = int(return_nonce, 16)
     exponent = CS_CertTools.get_privateexp(keyfile)
@@ -436,10 +441,10 @@ class CS_RemoteCA:
     curl.setopt(curl.URL, url)
     # Attach any post data
     if data:
-      curl.setopt(curl.POSTFIELDS, data)
+        curl.setopt(curl.POSTFIELDS, data)
     # Set the write function to write to a buffer
-    body = StringIO.StringIO()
-    headers = StringIO.StringIO()
+    body = BytesIO()
+    headers = BytesIO()
     curl.setopt(curl.WRITEFUNCTION, body.write)
     curl.setopt(curl.HEADERFUNCTION, headers.write)
     # Set-up CA verification
@@ -447,19 +452,14 @@ class CS_RemoteCA:
       curl.setopt(curl.CAINFO, cafile)
     else:
       curl.setopt(curl.SSL_VERIFYPEER, False)
-    # PPPK is used instead!
-    ## Set-up user authentication
-    #if usercert and userkey:
-    #  curl.setopt(curl.SSLCERT, usercert)
-    #  curl.setopt(curl.SSLKEY, userkey)
     # Set-up stage 1 PPPK auth if required
     if with_pppk >= CS_Const.Lite_PPPK:
-      ext_hdr = [ "PPPK: this is pppk",
-                  "LocalHost: %s" % socket.gethostname() ]
+      ext_hdrs = [ "PPPK: this is pppk",
+                   "LocalHost: %s" % socket.gethostname() ]
       if with_pppk == CS_Const.Full_PPPK:
         userserial = CS_CertTools.get_clientserial(usercert)
-        ext_hdr.append("serial: %u" % userserial)
-      curl.setopt(curl.HTTPHEADER, ext_hdr)
+        ext_hdrs.append("serial: %u" % userserial)
+      curl.setopt(curl.HTTPHEADER, ext_hdrs)
     # Actually run the request...
     curl.perform()
     code = curl.getinfo(pycurl.HTTP_CODE)
@@ -467,10 +467,10 @@ class CS_RemoteCA:
       # Normal requests finish here
       # Return the return code & string
       curl.close()
-      return (code, body.getvalue())
+      return (code, body.getvalue().decode("ascii"))
     # We got a 401 and PPPK is enabled, which means we can do PPPK auth now
-    print "Starting PPPK authentication..."
-    real_headers = headers.getvalue().split("\n")
+    print("Starting PPPK authentication...")
+    real_headers = headers.getvalue().decode("ascii").split("\n")
     nonce = None
     keyid = None
     realm = None
@@ -487,20 +487,18 @@ class CS_RemoteCA:
     # Now we can do the PPPK algorithm
     resp_code = CS_CertTools.do_pppk(nonce, keyid, userkey)
     # Add the new auth codes to the headers
-    ext_hdr += [ "realm: %s" % realm,
-                 "keyid: %s" % keyid,
-                 "response: %s" % resp_code ]
-    curl.setopt(curl.HTTPHEADER, ext_hdr)
+    ext_hdrs += [ "realm: %s" % realm,
+                  "keyid: %s" % keyid,
+                  "response: %s" % resp_code ]
+    curl.setopt(curl.HTTPHEADER, ext_hdrs)
     # Reset the buffers and re-send the request
-    body = StringIO.StringIO()
-    headers = StringIO.StringIO()
+    body = BytesIO()
     curl.setopt(curl.WRITEFUNCTION, body.write)
-    curl.setopt(curl.HEADERFUNCTION, headers.write)
     curl.perform()
     code = curl.getinfo(pycurl.HTTP_CODE)
     curl.close()
     # Either we got a success code now, or some other error...
-    return (code, body.getvalue())
+    return (code, body.getvalue().decode("ascii"))
 
   @staticmethod
   def post_csr(csrpem,
@@ -577,9 +575,9 @@ class CS_UI:
     if batch:
       return # In batch mode, print no prompt, just continue...
     while True:
-      res = raw_input(prompt + " [y/N]? ")
+      res = input(prompt + " [y/N]? ")
       if res == "n" or res == "N" or len(res) == 0:
-        print "Cancelling..."
+        print("Cancelling...")
         sys.exit(0)
       if res == "y" or res == "Y":
         break
@@ -591,18 +589,20 @@ class CS_UI:
       userpin = CS_DEF_PINHASH
       useremail = CS_DEF_EMAIL
     else:
-      userpin = raw_input("Please enter a PIN for this request "
-                          "(min 10 chars): ")
+      userpin = input("Please enter a PIN for this request "
+                      "(min 10 chars): ")
       if len(userpin) < 10:
-        print "Pin must be at least 10 chars. Exiting."
+        print("Pin must be at least 10 chars. Exiting.")
         sys.exit(0)
-      userpin = sha.new(userpin).hexdigest()
-      useremail = raw_input("Please enter your (ideally .ac.uk) "
-                            "e-mail address: ")
+      sha = sha1()
+      sha.update(userpin)
+      userpin = sha.hexdigest()
+      useremail = input("Please enter your (ideally .ac.uk) "
+                        "e-mail address: ")
       CS_UI.confirm_user("Now ready to create & send request, continue")
-    print "Generating keys..."
+    print("Generating keys...")
     CS_CertTools.create_csr(store, cn, hostcert, sans)
-    print "Sending CSR to CA..."
+    print("Sending CSR to CA...")
     csrpem = store.read(CS_Const.CSR_FILE)
     try:
       CS_RemoteCA.post_csr(csrpem,
@@ -611,63 +611,63 @@ class CS_UI:
                            pinhash = userpin,
                            email = useremail)
     except:
-      print "An error occured. Removing CSR & Key..."
+      print("An error occured. Removing CSR & Key...")
       store.clear() # Failure, reset request so it's easy to try again
       raise
-    print "Done. You should receive an e-mail from the CA shortly."
-    print ""
+    print("Done. You should receive an e-mail from the CA shortly.")
+    print("")
     if not hostcert:
-      print "As this is a user cert, " \
-            "you should add a key passphrase by running:"
+      print("As this is a user cert, " \
+            "you should add a key passphrase by running:")
       path = store.get_path(CS_Const.KEY_FILE)
-      print "openssl rsa -in %s -out %s.tmp -des3" % (path, path)
-      print "cp %s.tmp %s" % (path, path)
-      print "rm %s.tmp" % path
-      print ""
+      print("openssl rsa -in %s -out %s.tmp -des3" % (path, path))
+      print("cp %s.tmp %s" % (path, path))
+      print("rm %s.tmp" % path)
+      print("")
 
   @staticmethod
   def fetch_cert(store, hostcert, syscert = False):
     """ Retreive a signed cert from the CA. """
     pubkey = CS_CertTools.get_pubkey(store)
-    print "Checking..."
+    print("Checking...")
     certpem = CS_RemoteCA.get_cert(pubkey, store.get_path(CS_Const.CA_FILE))
     if not certpem:
-      print "No information about this request from the CA is available yet."
+      print("No information about this request from the CA is available yet.")
       return
-    certpem += "\n"
+    certpem += b"\n"
     store.write(CS_Const.CERT_FILE, certpem, CS_DEF_CERTPERMS)
-    print "Completed."
+    print("Completed.")
     cert = store.get_path(CS_Const.CERT_FILE)
     key = store.get_path(CS_Const.KEY_FILE)
-    print "Cert is at: %s" % cert
-    print "Key is at: %s" % key
-    print ""
+    print("Cert is at: %s" % cert)
+    print("Key is at: %s" % key)
+    print("")
     if not hostcert:
-      print "As this is a user cert, you may want to install " \
-            "these in your home dir by running:"
-      print "mkdir -p ~/.globus"
-      print "cp %s ~/.globus/usercert.pem" % cert
-      print ""
-      print "For a user cert, you should add a password to the " \
-            "private key at the same time:"
-      print "openssl rsa -in %s -out ~/.globus/userkey.pem -des3" % key
-      print ""
-      print "You may also want to create a .p12 file to import into " \
-            "your browser by running:"
-      print "openssl pkcs12 -export -in %s -inkey %s -out gridcert.p12" \
-              % (cert, key)
-      print "chmod 600 gridcert.p12"
-      print ""
+      print("As this is a user cert, you may want to install " \
+            "these in your home dir by running:")
+      print("mkdir -p ~/.globus")
+      print("cp %s ~/.globus/usercert.pem" % cert)
+      print("")
+      print("For a user cert, you should add a password to the " \
+            "private key at the same time:")
+      print("openssl rsa -in %s -out ~/.globus/userkey.pem -des3" % key)
+      print("")
+      print("You may also want to create a .p12 file to import into " \
+            "your browser by running:")
+      print("openssl pkcs12 -export -in %s -inkey %s -out gridcert.p12" \
+              % (cert, key))
+      print("chmod 600 gridcert.p12")
+      print("")
     if syscert:
-      print ""
-      print "You may want to install the hostcert now " \
-            "with the following commands:"
-      print "cp %s /etc/grid-security/hostcert.pem" % cert
-      print "cp %s /etc/grid-security/hostkey.pem" % key
-      print ""
-      print "Remember that some grid services will also need copies " \
-            " in other locations updating and/or different permissions."
-      print ""
+      print("")
+      print("You may want to install the hostcert now " \
+            "with the following commands:")
+      print("cp %s /etc/grid-security/hostcert.pem" % cert)
+      print("cp %s /etc/grid-security/hostkey.pem" % key)
+      print("")
+      print("Remember that some grid services will also need copies " \
+            " in other locations updating and/or different permissions.")
+      print("")
 
   @staticmethod
   def renew_cert(store, cn, hostcert):
@@ -676,20 +676,22 @@ class CS_UI:
       userpin = CS_DEF_PINHASH
       useremail = CS_DEF_EMAIL
     else:
-      userpin = raw_input("Please enter a PIN for this renewal "
-                          "(min 10 chars): ")
+      userpin = input("Please enter a PIN for this renewal "
+                      "(min 10 chars): ")
       if len(userpin) < 10:
-        print "Pin must be at least 10 chars. Exiting."
+        print("Pin must be at least 10 chars. Exiting.")
         sys.exit(0)
-      userpin = sha.new(userpin).hexdigest()
-      useremail = raw_input("Please enter your (ideally .ac.uk) "
-                            "e-mail address: ")
+      sha = sha1()
+      sha.update(userpin)
+      userpin = sha.hexdigest()
+      useremail = input("Please enter your (ideally .ac.uk) "
+                        "e-mail address: ")
       CS_UI.confirm_user("Now ready to create & send renewal, continue")
     # Start by moving the old cert out of the way
     store.prepare_renew()
-    print "Generating renewal request..."
+    print("Generating renewal request...")
     CS_CertTools.create_csr(store, cn, hostcert)
-    print "Sending renewal CSR to CA..."
+    print("Sending renewal CSR to CA...")
     csrpem = store.read(CS_Const.CSR_FILE)
     try:
       CS_RemoteCA.post_csr(csrpem,
@@ -700,26 +702,26 @@ class CS_UI:
                            renewal_cert = store.get_path(CS_Const.OCERT_FILE),
                            renewal_key = store.get_path(CS_Const.OKEY_FILE))
     except:
-      print "An error occured. Undoing renewal operations..."
+      print("An error occured. Undoing renewal operations...")
       store.undo_renew()
       raise
-    print "Done. You should receive an e-mail when the renewed cert is ready."
+    print("Done. You should receive an e-mail when the renewed cert is ready.")
 
 
 def print_help():
   """ Print the usage information for the program and exit. """
-  print "Cert Sorcerer"
-  print "Usage: CS.py [--batch] [--fetch] [--san <san>] <cn of user or server>"
-  print "   Or: CS.py [--batch] [--fetch] [--san <san>] --sys"
-  print ""
-  print "Option meanings:"
-  print "  --sys -- Operate on this machine's hostcert directly."
-  print "  --fetch -- Don't prompt for fetching certificates from the CA."
-  print "  --batch -- Make y/n prompts assume yes. Use with caution."
-  print "  --san <san> -- Adds SubjectAlternativeNames to new requests,"
-  print "                 <san> should be in the format 'DNS:other.domain',"
-  print "                 Only valid for new requests (ignored otherwise)."
-  print ""
+  print("Cert Sorcerer")
+  print("Usage: CS.py [--batch] [--fetch] [--san <san>] <cn of user or server>")
+  print("   Or: CS.py [--batch] [--fetch] [--san <san>] --sys")
+  print("")
+  print("Option meanings:")
+  print("  --sys -- Operate on this machine's hostcert directly.")
+  print("  --fetch -- Don't prompt for fetching certificates from the CA.")
+  print("  --batch -- Make y/n prompts assume yes. Use with caution.")
+  print("  --san <san> -- Adds SubjectAlternativeNames to new requests,")
+  print("                 <san> should be in the format 'DNS:other.domain',")
+  print("                 Only valid for new requests (ignored otherwise).")
+  print("")
   sys.exit(0)
 
 
@@ -733,8 +735,8 @@ if __name__ == "__main__":
   try:
     optlist, args = getopt.getopt(sys.argv[1:], '',
                                   [ 'sys', 'batch', 'fetch', 'san=', 'help' ])
-  except getopt.GetoptError, err:
-    print str(err)
+  except getopt.GetoptError as err:
+    print(str(err))
     print_help()
 
   for opt in optlist:
@@ -759,7 +761,7 @@ if __name__ == "__main__":
     cn = " ".join(args)
   else:
     if len(args) > 0:
-      print "Extra argument(s) found after --sys?"
+      print("Extra argument(s) found after --sys?")
       sys.exit(0)
     cn = socket.gethostname()
 
@@ -774,9 +776,9 @@ if __name__ == "__main__":
   dn = "OU=%s,L=%s,O=%s,C=%s" % (CS_DEF_RA_OU, CS_DEF_RA_L,
                                  CS_DEF_CA_O, CS_DEF_CA_C)
   if hostcert:
-    print 'Processing HOST cert with "CN=%s" (%s).' % (cn, dn)
+    print('Processing HOST cert with "CN=%s" (%s).' % (cn, dn))
   else:
-    print 'Processing USER cert with "CN=%s" (%s).' % (cn, dn)
+    print('Processing USER cert with "CN=%s" (%s).' % (cn, dn))
 
   store = CS_StoredCert(CS_DEF_STORE, cn)
   if syscert:
@@ -787,8 +789,8 @@ if __name__ == "__main__":
   state = store.get_state()
   if state == CS_Const.Nothing:
     if fetch:
-      print "No existing data about this request, " \
-            "run again without --fetch to continue."
+      print("No existing data about this request, " \
+            "run again without --fetch to continue.")
       sys.exit(0)
     CS_UI.confirm_user("There is no local data about this DN, "
                        "request a new cert", batch)
@@ -796,10 +798,10 @@ if __name__ == "__main__":
     # for a hostcert...
     if hostcert and ((not os.access(CS_DEF_CERT, os.R_OK))
                        or (not os.access(CS_DEF_KEY, os.R_OK))):
-      print "A valid usercert & key must be installed at the following " \
-            "paths to request a new hostcert:"
-      print "%s" % CS_DEF_CERT
-      print "%s" % CS_DEF_KEY
+      print("A valid usercert & key must be installed at the following " \
+            "paths to request a new hostcert:")
+      print("%s" % CS_DEF_CERT)
+      print("%s" % CS_DEF_KEY)
       sys.exit(1)
     CS_UI.new_cert(store, cn, hostcert, sans)
   elif state == CS_Const.CSR:
@@ -808,13 +810,13 @@ if __name__ == "__main__":
     CS_UI.fetch_cert(store, hostcert, syscert)
   elif state == CS_Const.Complete:
     if fetch:
-      print "Certificate already signed, " \
-            "run again without --fetch to continue."
+      print("Certificate already signed, " \
+            "run again without --fetch to continue.")
       sys.exit(0)
     if sans:
-      print "ERROR: SANs can't be used with renewal.\n" \
+      print("ERROR: SANs can't be used with renewal.\n" \
             "To 'renew' SAN certificates, delete the local data and \n" \
-            "start the request from scratch."
+            "start the request from scratch.")
       sys.exit(1)
     CS_UI.confirm_user("This certificate has been previously signed, "
                        "start a renewal", batch)
