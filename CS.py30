@@ -214,7 +214,7 @@ class CS_StoredCert:
       else:
         try:
           file_out.write(data.decode("ascii"))
-        except AttributeError:
+        except:
           print('Failed to write or decode object: {}'.format(data))
           raise 
     self.update()
