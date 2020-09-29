@@ -208,9 +208,15 @@ class CS_StoredCert:
     fd = os.open(self._paths[file_type],
                  os.O_WRONLY | os.O_TRUNC | os.O_CREAT,
                  perms)
-    file_out = os.fdopen(fd, "w")
-    file_out.write(data.decode("ascii"))
-    file_out.close()
+    with os.fdopen(fd, "w") as file_out:
+      if isinstance(data,  str):
+        file_out.write(data)
+      else:
+        try:
+          file_out.write(data.decode("ascii"))
+        except:
+          print('Failed to write or decode object: {}'.format(data))
+          raise 
     self.update()
 
   def read(self, file_type):
@@ -461,7 +467,13 @@ class CS_RemoteCA:
         ext_hdrs.append("serial: %u" % userserial)
       curl.setopt(curl.HTTPHEADER, ext_hdrs)
     # Actually run the request...
-    curl.perform()
+    try:
+      curl.perform()
+    except pycurl.error as err:
+      print('Pycurl error: "{}"'.format(str(err)))
+      print('curl: "{}"'.format(str(curl.errstr())))
+      print('This is most likely the external server is having problems or is un-trusted.')
+      raise
     code = curl.getinfo(pycurl.HTTP_CODE)
     if not (with_pppk and (code == 401)):
       # Normal requests finish here
