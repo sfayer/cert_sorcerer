@@ -14,12 +14,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # CS.py - Cert Sorcerer
-# Copyright 2013, High Energy Physics, Imperial College
+# Copyright 2013-2021, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.0.9a (Development Version)
+    Version 1.0.9
 """
-VERSION = "CertSorcerer 1.0.9a"
+VERSION = "CertSorcerer 1.0.9"
 
 import os
 import sys
@@ -547,9 +547,13 @@ class CS_RemoteCA:
   @staticmethod
   def get_cert(pubkey,
                cafile):
-    """ Get the cert from the CA using the new "one-step" interface. """
-    req_uri = "resources/resource/publickey/%s" % pubkey
-    code, data = CS_RemoteCA._do_req(req_uri, None, cafile)
+    """ Get the cert from the CA using the new POST interface.
+        This is to avoid problems with double // in the URL.
+    """
+    req_uri = "resources/resource/publickey/pk"
+    req_xml = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>""" \
+              """<PublicKey>%s</PublicKey>""" % pubkey
+    code, data = CS_RemoteCA._do_req(req_uri, req_xml, cafile)
     if not code == 200:
       raise Exception("CA returned error code %d (%s) while fetching cert."
                         % (code, data))

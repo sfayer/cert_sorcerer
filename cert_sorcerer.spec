@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
+* Wed Feb 03 2021 Simon Fayer <sf105@ic.ac.uk> - 1.0.9-1
+- Use new post interface for fetching certs due to '//' URL problem.
+
 * Fri May 01 2020 Simon Fayer <sf105@ic.ac.uk> - 1.0.8-1
 - Add support for python3 (CentOS8).
 
