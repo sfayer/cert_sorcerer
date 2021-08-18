@@ -17,9 +17,9 @@
 # Copyright 2013-2021, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.0.10a (Development version)
+    Version 1.0.10
 """
-VERSION = "CertSorcerer 1.0.10a"
+VERSION = "CertSorcerer 1.0.10"
 
 import os
 import sys
@@ -308,7 +308,7 @@ class CS_CertTools:
       ext_details.extend(sans)
     ext = X509Extension("subjectAltName", False, ','.join(ext_details))
     csr.add_extensions([ext])
-    csr.sign(key, "md5")
+    csr.sign(key, "sha256")
     # Convert the CSR & KEY to PEM files
     key_pem = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
     csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr)
