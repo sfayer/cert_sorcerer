@@ -2,7 +2,7 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.0.10
+Version:        1.0.11
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
