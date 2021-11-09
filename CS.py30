@@ -698,7 +698,7 @@ class CS_UI:
         print("Pin must be at least 10 chars. Exiting.")
         sys.exit(0)
       sha = sha1()
-      sha.update(userpin)
+      sha.update(userpin.encode("UTF-8"))
       userpin = sha.hexdigest()
       useremail = input("Please enter your (ideally .ac.uk) "
                         "e-mail address: ")

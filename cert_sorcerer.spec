@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
+* ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.0.11-1
+- Ensure user-pin is in bytes (rather than unicode) before hashing.
+
 * Wed Aug 18 2021 Simon Fayer <sf105@ic.ac.uk> - 1.0.10-1
 - Use sha256 for CSR signatures.
 
