@@ -2,7 +2,7 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.0.11
+Version:        1.0.12
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
+* ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.0.12-1
+- Nothing yet!
+
 * Fri Nov 11 2022 Simon Fayer <sf105@ic.ac.uk> - 1.0.11-1
 - Ensure user-pin is in bytes (rather than unicode) before hashing.
 - Set user e-mail SAN for usercert request correctly.
