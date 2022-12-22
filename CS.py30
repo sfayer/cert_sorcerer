@@ -17,9 +17,9 @@
 # Copyright 2013-2021, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.0.12a (Development version)
+    Version 1.0.12
 """
-VERSION = "CertSorcerer 1.0.12a"
+VERSION = "CertSorcerer 1.0.12"
 
 import os
 import sys

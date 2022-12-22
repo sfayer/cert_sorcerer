@@ -55,8 +55,8 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
-* ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.0.12-1
-- Nothing yet!
+* Thu Dec 22 2022 Simon Fayer <sf105@ic.ac.uk> - 1.0.12-1
+- Fix py27 renewals due to typo in 1.0.11 version.
 
 * Fri Nov 11 2022 Simon Fayer <sf105@ic.ac.uk> - 1.0.11-1
 - Ensure user-pin is in bytes (rather than unicode) before hashing.

@@ -17,9 +17,9 @@
 # Copyright 2013-2021, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.0.12a (Development version)
+    Version 1.0.12
 """
-VERSION = "CertSorcerer 1.0.12a"
+VERSION = "CertSorcerer 1.0.12"
 
 import os
 import sys
@@ -692,7 +692,6 @@ class CS_UI:
     # Start by moving the old cert out of the way
     store.prepare_renew()
     print "Generating renewal request..."
-    CS_CertTools.create_csr(store, cn, hostcert)
     if hostcert:
       CS_CertTools.create_csr(store, cn, hostcert)
     else:
