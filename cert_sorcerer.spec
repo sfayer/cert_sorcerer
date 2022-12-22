@@ -2,7 +2,7 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.0.12
+Version:        1.0.13
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
@@ -55,6 +55,9 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
+* ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.0.13-1
+- Nothing Yet!
+
 * Thu Dec 22 2022 Simon Fayer <sf105@ic.ac.uk> - 1.0.12-1
 - Fix py27 renewals due to typo in 1.0.11 version.
 
