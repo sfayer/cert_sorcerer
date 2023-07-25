@@ -55,8 +55,8 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
-* ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.0.13-1
-- Nothing Yet!
+* Tue Jul 25 2023 Simon Fayer <sf105@ic.ac.uk> - 1.0.13-1
+- Update CA certs + auto-update ca.pem when needed.
 
 * Thu Dec 22 2022 Simon Fayer <sf105@ic.ac.uk> - 1.0.12-1
 - Fix py27 renewals due to typo in 1.0.11 version.
