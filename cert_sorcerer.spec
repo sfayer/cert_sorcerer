@@ -8,29 +8,24 @@ Summary:        A tool for requesting certificates
 Group:          Applications/Internet
 License:        GPLv3
 URL:            https://github.com/sfayer/cert_sorcerer
-Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_10/CS.py30
-Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_10/CS.py27
-Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_10/README
-Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_10/NOTES
-Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_10/QUICKSTART
-Source5:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_10/COPYING
+Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/CS.py
+Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/README
+Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/NOTES
+Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/QUICKSTART
+Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/COPYING
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-%if 0%{?rhel} >= 8
 Requires:       openssl python3 python3-pycurl python3-pyOpenSSL
-%else
-Requires:       openssl python python-pycurl pyOpenSSL
-%endif
 
 %description
 Cert Sorcerer is a tool for requestion certificates from a CA web-service.
 You should customise this package with your various local parameters.
 
 %prep
-cp %{SOURCE2} README
-cp %{SOURCE3} NOTES
-cp %{SOURCE4} QUICKSTART
-cp %{SOURCE5} COPYING
+cp %{SOURCE1} README
+cp %{SOURCE2} NOTES
+cp %{SOURCE3} QUICKSTART
+cp %{SOURCE4} COPYING
 
 %build
 
@@ -38,11 +33,7 @@ cp %{SOURCE5} COPYING
 rm -Rf %{buildroot}
 # Install binary
 mkdir -p %{buildroot}%{_bindir}
-%if 0%{?rhel} >= 8
 cp %{SOURCE0} %{buildroot}%{_bindir}/CS.py
-%else
-cp %{SOURCE1} %{buildroot}%{_bindir}/CS.py
-%endif
 chmod 755 %{buildroot}%{_bindir}/CS.py
 
 %clean
@@ -56,7 +47,7 @@ rm -rf %{buildroot}
 
 %changelog
 * ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.0.14-1
-- Nothing Yet!
+- Drop python2 (EL7) support.
 
 * Tue Jul 25 2023 Simon Fayer <sf105@ic.ac.uk> - 1.0.13-1
 - Update CA certs + auto-update ca.pem when needed.
