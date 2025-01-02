@@ -28,11 +28,11 @@ import getopt
 import shutil
 import pycurl
 import socket
+import getpass
 import binascii
 from io import BytesIO
 from hashlib import sha1
 from xml.dom import minidom
-from subprocess import Popen, PIPE
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
@@ -327,25 +327,19 @@ class CS_CertTools:
     # Write them out to the store
     store.write(CS_Const.KEY_FILE, key_pem, CS_DEF_KEYPERMS)
     store.write(CS_Const.CSR_FILE, csr_pem, CS_DEF_CSRPERMS)
-    # Just to be 100% sure everything is compabile...
-    # ... Ensure the key is in PKCS#1 format
-    CS_CertTools.pkcs8_to_pkcs1(store.get_path(CS_Const.KEY_FILE))
 
   @staticmethod
   def get_pubkey(store):
     """ Get the store public key (from the CSR) in PEM format. """
-    # pyOpenssl has no accessor for the public key, we'll shell openssl
     if not store.get_state() >= CS_Const.CSR:
       raise Exception("Certificate in wrong state to get public key.")
-    ssl_cmd = ["openssl",
-               "req",
-               "-in",
-               store.get_path(CS_Const.CSR_FILE),
-               "-pubkey",
-               "-noout" ]
-    p = Popen(ssl_cmd, stdout = PIPE, stderr = PIPE)
-    key, _ = p.communicate()
-    key = key.decode("ascii")
+    path == store.get_path(CS_Const.CSR_FILE)
+    file_in = open(path, "rb")
+    csr_pem = file_in.read()
+    file_in.close()
+    pubkey = x509.load_pem_x509_csr(csr_pem).public_key()
+    key = pubkey.public_bytes(encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo).decode()
     # Remove the guards from the key to get a plain base64 string
     key = key.replace("\n", "")
     key = key.replace("-----BEGIN PUBLIC KEY-----", "")
@@ -366,45 +360,37 @@ class CS_CertTools:
   @staticmethod
   def get_privateexp(keyfile = CS_DEF_KEY):
     """ Get the private exponent of a key file by path.
-        This may prompt the user if the key is encrypted. """
-    # This is another one not supported by pyOpenssl
-    ssl_cmd = ["openssl", "rsa", "-in", keyfile, "-text", "-noout" ]
-    p = Popen(ssl_cmd, stdout = PIPE)
-    key_info, _ = p.communicate()
-    key_info = key_info.decode("ascii")
-    if (p.returncode != 0):
-      raise Exception("Failed to get private exponent from openssl... " \
-                      "Bad passphrase?")
-    # Get just the private exponent from the text
-    key_split = key_info.split("privateExponent:\n")[1]
-    key_split = key_split.split("\nprime1:")[0]
-    # Tidy up the exponent into a large hexadecimal number
-    key_split = key_split.replace(" ", "")
-    key_split = key_split.replace(":", "")
-    key_split = key_split.replace("\n", "")
-    return int(key_split, 16)
+        This may prompt the user if the key is encrypted.
+        Throws a ValueError if password is wrong.
+    """
+    file_in = open(keyfile, "rb")
+    pem = file_in.read()
+    file_in.close()
+    # We have to handle encrypted keys here
+    # TODO: Handle encrypted key
+    try:
+      key = serialization.load_pem_private_key(pem, password=None)
+    except TypeError:
+      # Password required, get it as an ascii byte string
+      passwd = getpass.getpass("Key password: ").encode('ascii')
+      # This will raise an exception if the password is wrong which can
+      # be caught by the caller (ValueError)
+      key = serialization.load_pem_private_key(pem, password=passwd)
+    return key.private_numbers().d
 
   @staticmethod
   def get_rawpubkey(certfile):
     """ Get the public key of a certificate in raw hexadecimal format of
         modulus.exponent """
     # Gets the public key as a lowercase hexadecimal string
-    # Not possible in pyOpenssl, so we'll be shelling openssl again
-    ssl_cmd = ["openssl", "x509", "-in", certfile, "-modulus", "-noout" ]
-    p = Popen(ssl_cmd, stdout = PIPE)
-    cert_info, _ = p.communicate()
-    cert_info = cert_info.decode("ascii")
-    modulus = cert_info.split("=")[1].strip().lower()
-    # We also need the exponent
-    ssl_cmd = ["openssl", "x509", "-in", certfile, "-text", "-noout" ]
-    p = Popen(ssl_cmd, stdout = PIPE)
-    cert_info, _ = p.communicate()
-    cert_info = cert_info.decode("ascii")
-    exponent = cert_info.split("Exponent:")[1]
-    exponent = exponent.split("(")[1]
-    exponent = exponent.split(")")[0]
-    exponent = exponent.replace("0x", "").lower()
-    return "%s.%s" % (modulus, exponent)
+    file_in = open(certfile, "rb")
+    pem = file_in.read()
+    file_in.close()
+    cert = x509.load_pem_x509_certificate(pem)
+    pubnum = cert.public_key().public_numbers()
+    modulus = pubnum.n
+    exponent = pubnum.e
+    return "%x.%x" % (modulus, exponent)
 
   @staticmethod
   def do_pppk(nonce, keyid, keyfile = CS_DEF_KEY):
@@ -421,19 +407,6 @@ class CS_CertTools:
     exponent = CS_CertTools.get_privateexp(keyfile)
     resp = pow(base, exponent, modulus)
     return "%x" % resp
-
-  @staticmethod
-  def pkcs8_to_pkcs1(keyfile):
-    """ Converts a private key from PKCS8 format into PKCS1 format.
-        Most grid software requires PKCS1 on all platforms. """
-    # This is once again a job for openssl
-    # but first create a temp file
-    tmpfile = "%s.pkcs8" % keyfile 
-    shutil.copy(keyfile, tmpfile)
-    ssl_cmd = ["openssl", "rsa", "-in", tmpfile, "-out", keyfile ]
-    p = Popen(ssl_cmd, stdout = PIPE)
-    p.communicate()
-    os.unlink(tmpfile)
 
 class CS_RemoteCA:
   """ Functions for interacting with a remote CA via a web-service. """
@@ -622,7 +595,7 @@ class CS_UI:
                         "e-mail address: ")
       CS_UI.confirm_user("Now ready to create & send request, continue")
     print("Generating keys...")
-    CS_CertTools.create_csr(store, cn, hostcert, sans)
+    CS_CertTools.create_csr(store, cn, hostcert, sans, email=useremail)
     print("Sending CSR to CA...")
     csrpem = store.read(CS_Const.CSR_FILE)
     try:
