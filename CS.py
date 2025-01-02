@@ -19,24 +19,25 @@
 """ Cert Sorcerer - A tool for requesting certificates.
     Version 1.0.14a (Development Version)
 """
-VERSION = "CertSorcerer 1.0.14a (Development Version)"
-
 import os
 import sys
 import time
 import getopt
 import shutil
-import pycurl
 import socket
 import getpass
 import binascii
 from io import BytesIO
 from hashlib import sha1
 from xml.dom import minidom
+
+import pycurl
 from cryptography import x509
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+
+VERSION = "CertSorcerer 1.0.14a (Development Version)"
 
 # Default Settings
 ## Default domain name: Hosts not matching this will print a warning
@@ -222,7 +223,7 @@ class CS_StoredCert:
           file_out.write(data.decode("ascii"))
         except:
           print('Failed to write or decode object: {}'.format(data))
-          raise 
+          raise
     self.update()
 
   def read(self, file_type):
@@ -266,7 +267,7 @@ class CS_StoredCert:
 
   def clear(self):
     """ Completely remove all the files for the given store. """
-    for key, value in self._paths.items():
+    for value in self._paths.values():
       if os.path.exists(value):
         os.unlink(value)
     self.update()
@@ -334,7 +335,7 @@ class CS_CertTools:
     """ Get the store public key (from the CSR) in PEM format. """
     if not store.get_state() >= CS_Const.CSR:
       raise Exception("Certificate in wrong state to get public key.")
-    path == store.get_path(CS_Const.CSR_FILE)
+    path = store.get_path(CS_Const.CSR_FILE)
     file_in = open(path, "rb")
     csr_pem = file_in.read()
     file_in.close()
@@ -368,7 +369,6 @@ class CS_CertTools:
     pem = file_in.read()
     file_in.close()
     # We have to handle encrypted keys here
-    # TODO: Handle encrypted key
     try:
       key = serialization.load_pem_private_key(pem, password=None)
     except TypeError:
@@ -426,7 +426,7 @@ class CS_RemoteCA:
     curl.setopt(curl.URL, url)
     # Attach any post data
     if data:
-        curl.setopt(curl.POSTFIELDS, data)
+      curl.setopt(curl.POSTFIELDS, data)
     # Set the write function to write to a buffer
     body = BytesIO()
     headers = BytesIO()
@@ -571,10 +571,10 @@ class CS_UI:
       return # In batch mode, print no prompt, just continue...
     while True:
       res = input(prompt + " [y/N]? ")
-      if res == "n" or res == "N" or len(res) == 0:
+      if res in ('n', 'N') or len(res) == 0:
         print("Cancelling...")
         sys.exit(0)
-      if res == "y" or res == "Y":
+      if res in ('y', 'Y'):
         break
 
   @staticmethod
@@ -823,4 +823,3 @@ if __name__ == "__main__":
   else:
     raise Exception("Unknown Certificate State!")
   sys.exit(0)
-

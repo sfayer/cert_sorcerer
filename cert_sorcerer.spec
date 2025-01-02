@@ -53,6 +53,7 @@ rm -rf %{buildroot}
 - Remove openssl popen callouts.
 - Check domain name matches expected value before doing anything.
 - Fix iteritems crash on store cleanup.
+- Minor fixes and tidy-up.
 
 * Tue Jul 25 2023 Simon Fayer <sf105@ic.ac.uk> - 1.0.13-1
 - Update CA certs + auto-update ca.pem when needed.
