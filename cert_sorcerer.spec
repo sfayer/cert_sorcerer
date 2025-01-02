@@ -15,7 +15,7 @@ Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/QUICKSTART
 Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/COPYING
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
-Requires:       openssl python3 python3-pycurl python3-pyOpenSSL
+Requires:       openssl python3 python3-pycurl python3-cryptography
 
 %description
 Cert Sorcerer is a tool for requestion certificates from a CA web-service.
@@ -48,6 +48,8 @@ rm -rf %{buildroot}
 %changelog
 * ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.0.14-1
 - Drop python2 (EL7) support.
+- Switch from pyopenssl to cryptography.
+- Note: --san option format has changed.
 
 * Tue Jul 25 2023 Simon Fayer <sf105@ic.ac.uk> - 1.0.13-1
 - Update CA certs + auto-update ca.pem when needed.

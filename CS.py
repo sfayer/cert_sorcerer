@@ -33,8 +33,10 @@ from io import BytesIO
 from hashlib import sha1
 from xml.dom import minidom
 from subprocess import Popen, PIPE
-from OpenSSL import crypto
-from OpenSSL.crypto import X509Req, X509Extension, PKey
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 # Default Settings
 ## Domain name to append to non-qualified hostnames
@@ -296,32 +298,32 @@ class CS_CertTools:
     if not store.get_state() == CS_Const.Nothing:
       raise Exception("Certificate in wrong state to create new CSR.")
     # Generate a key
-    key = PKey()
-    key.generate_key(crypto.TYPE_RSA, keybits)
-    # Generate a CSR
-    csr = X509Req()
-    csr.set_pubkey(key)
-    dn = csr.get_subject()
-    dn.CN = dn_cn
-    dn.OU = dn_ou
-    dn.L = dn_l
-    dn.O = dn_o
-    dn.C = dn_c
-    # Create the relevant extension
+    key = rsa.generate_private_key(public_exponent=65537, key_size=keybits)
+    # Generate CSR details
+    x509name = x509.Name([x509.NameAttribute(NameOID.COUNTRY_NAME, dn_c),
+                          x509.NameAttribute(NameOID.LOCALITY_NAME, dn_l),
+                          x509.NameAttribute(NameOID.ORGANIZATION_NAME, dn_o),
+                          x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, dn_ou),
+                          x509.NameAttribute(NameOID.COMMON_NAME, dn_cn)])
+    ext_details = []
     if hostcert:
-      ext_details = ["DNS:%s" % dn_cn]
+      ext_details.append(x509.DNSName(dn_cn))
     else:
-      ext_details = ["email:%s" % email]
+      ext_details.append(x509.RFC822Name(email))
     if sans:
-      ext_details.extend(sans)
-    ext_str = ",".join(ext_details)
-    ext_str = ext_str.encode("ascii")
-    ext = X509Extension(b"subjectAltName", False, ext_str)
-    csr.add_extensions([ext])
-    csr.sign(key, "sha256")
+      for san in sans:
+        ext_details.append(x509.DNSName(san))
+    ext = x509.SubjectAlternativeName(ext_details)
+    # Build the full CSR
+    builder = x509.CertificateSigningRequestBuilder()
+    builder = builder.subject_name(x509name)
+    builder = builder.add_extension(ext, critical=False)
+    csr = builder.sign(key, hashes.SHA256())
     # Convert the CSR & KEY to PEM files
-    key_pem = crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-    csr_pem = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr)
+    key_pem = key.private_bytes(encoding=serialization.Encoding.PEM,
+                                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                                encryption_algorithm=serialization.NoEncryption())
+    csr_pem = csr.public_bytes(serialization.Encoding.PEM)
     # Write them out to the store
     store.write(CS_Const.KEY_FILE, key_pem, CS_DEF_KEYPERMS)
     store.write(CS_Const.CSR_FILE, csr_pem, CS_DEF_CSRPERMS)
@@ -355,11 +357,11 @@ class CS_CertTools:
     """ Get the serial of a certificate by path. """
     if not os.path.exists(path):
       raise Exception("Client key not found while getting serial.")
-    file_in = open(path, "r")
+    file_in = open(path, "rb")
     pem = file_in.read()
     file_in.close()
-    cert = crypto.load_certificate(crypto.FILETYPE_PEM, pem)
-    return cert.get_serial_number()
+    cert = x509.load_pem_x509_certificate(pem)
+    return cert.serial_number
 
   @staticmethod
   def get_privateexp(keyfile = CS_DEF_KEY):
@@ -741,8 +743,8 @@ def print_help():
   print("  --sys -- Operate on this machine's hostcert directly.")
   print("  --fetch -- Don't prompt for fetching certificates from the CA.")
   print("  --batch -- Make y/n prompts assume yes. Use with caution.")
-  print("  --san <san> -- Adds SubjectAlternativeNames to new requests,")
-  print("                 <san> should be in the format 'DNS:other.domain',")
+  print("  --san <san> -- Adds DNS SubjectAlternativeNames to new requests,")
+  print("                 <san> should be just the domain name without any prefix,")
   print("                 Only valid for new requests (ignored otherwise).")
   print("")
   sys.exit(0)
@@ -770,10 +772,7 @@ if __name__ == "__main__":
     elif opt[0] == "--fetch":
       fetch = True
     elif opt[0] == "--san":
-      san_value = opt[1]
-      if not ':' in san_value:
-        san_value = "DNS:%s" % san_value
-      sans.append(san_value)
+      sans.append(opt[1])
     elif opt[0] == "--help":
       print_help()
 
