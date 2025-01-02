@@ -39,7 +39,8 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 # Default Settings
-## Domain name to append to non-qualified hostnames
+## Default domain name: Hosts not matching this will print a warning
+## You should update all parameters below when changing this.
 CS_DEF_DOMAIN = "grid.hep.ph.ic.ac.uk"
 ## Default e-mail for hostcerts
 CS_DEF_EMAIL = "lcg-site-admin@ic.ac.uk"
@@ -762,10 +763,13 @@ if __name__ == "__main__":
 
   # If there is no space, assume hostname... Real users must have a space
   hostcert = not " " in cn
-  if hostcert and not ("." in cn):
-    # No domain name in hostcert cn, add it..
-    cn += "." + CS_DEF_DOMAIN
   cn = cn.lower()
+  if hostcert and not cn.endswith(CS_DEF_DOMAIN):
+    # Domain name doesn't end in our expected default
+    # This might be a mistake if the script hasn't been customised
+    print("Cert domain name doesn't match expected built-in value!")
+    print("Updates about this cert will be sent to: %s" % CS_DEF_EMAIL)
+    CS_UI.confirm_user("Are you sure that this is correct?")
 
   # Tell the user how we've interpreted their input
   dn = "OU=%s,L=%s,O=%s,C=%s" % (CS_DEF_RA_OU, CS_DEF_RA_L,
