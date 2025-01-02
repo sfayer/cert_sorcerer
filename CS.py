@@ -266,7 +266,7 @@ class CS_StoredCert:
 
   def clear(self):
     """ Completely remove all the files for the given store. """
-    for key, value in self._paths.iteritems():
+    for key, value in self._paths.items():
       if os.path.exists(value):
         os.unlink(value)
     self.update()
