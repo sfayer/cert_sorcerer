@@ -298,7 +298,7 @@ class CS_CertTools:
                  ):
     """ Create a CSR PEM string for the given parameters. """
     if not store.get_state() == CS_Const.Nothing:
-      raise Exception("Certificate in wrong state to create new CSR.")
+      raise RuntimeError("Certificate in wrong state to create new CSR.")
     # Generate a key
     key = rsa.generate_private_key(public_exponent=65537, key_size=keybits)
     # Generate CSR details
@@ -334,7 +334,7 @@ class CS_CertTools:
   def get_pubkey(store):
     """ Get the store public key (from the CSR) in PEM format. """
     if not store.get_state() >= CS_Const.CSR:
-      raise Exception("Certificate in wrong state to get public key.")
+      raise RuntimeError("Certificate in wrong state to get public key.")
     path = store.get_path(CS_Const.CSR_FILE)
     file_in = open(path, "rb")
     csr_pem = file_in.read()
@@ -352,7 +352,7 @@ class CS_CertTools:
   def get_clientserial(path = CS_DEF_CERT):
     """ Get the serial of a certificate by path. """
     if not os.path.exists(path):
-      raise Exception("Client key not found while getting serial.")
+      raise RuntimeError("Client key not found while getting serial.")
     file_in = open(path, "rb")
     pem = file_in.read()
     file_in.close()
@@ -400,7 +400,7 @@ class CS_CertTools:
     # Ah well, Let's do it anyway:
     key_split = keyid.split(".")
     if not len(key_split) == 2:
-      raise Exception("Unexpected keyid format from CA.")
+      raise RuntimeError("Unexpected keyid format from CA.")
     return_nonce = "%s:%u" % (nonce, time.time())
     return_nonce = binascii.hexlify(return_nonce.lower().encode("ascii"))
     modulus = int(key_split[0], 16)
@@ -474,7 +474,7 @@ class CS_RemoteCA:
       if header.startswith("realm: "):
         realm = header.replace("realm: ", "")
     if not nonce or not keyid or not realm:
-      raise Exception("Missing parameter in PPPK headers from CA.")
+      raise RuntimeError("Missing parameter in PPPK headers from CA.")
     # Now we can do the PPPK algorithm
     resp_code = CS_CertTools.do_pppk(nonce, keyid, userkey)
     # Add the new auth codes to the headers
@@ -530,8 +530,8 @@ class CS_RemoteCA:
     code, data = CS_RemoteCA._do_req(csr_uri, csr_xml, cafile, usercert,
                                      key, use_pppk)
     if not code == 200 and not code == 201:
-      raise Exception("CA returned error code %d (%s) while sending CSR." %
-                        (code, data))
+      raise RuntimeError("CA returned error code %d (%s) while sending CSR." %
+                         (code, data))
 
   @staticmethod
   def get_cert(pubkey,
@@ -544,16 +544,16 @@ class CS_RemoteCA:
               """<PublicKey>%s</PublicKey>""" % pubkey
     code, data = CS_RemoteCA._do_req(req_uri, req_xml, cafile)
     if not code == 200:
-      raise Exception("CA returned error code %d (%s) while fetching cert."
-                        % (code, data))
+      raise RuntimeError("CA returned error code %d (%s) while fetching cert."
+                         % (code, data))
     # Process the XML tree to get the certificate ID out
     doc = minidom.parseString(data)
     certs = doc.getElementsByTagName("X509Certificate")
     if len(certs) < 1:
       return None # No cert yet / Public key not found
     if len(certs) > 1:
-      raise Exception("CA returned multiple certificates for public key. " \
-                      "This is not yet supported.")
+      raise RuntimeError("CA returned multiple certificates for public key. " \
+                         "This is not yet supported.")
     cert_pem = certs[0].firstChild.data
     # Convert the result from unicode to a plain ascii string
     return cert_pem.encode("ascii", "ignore")
@@ -821,5 +821,5 @@ if __name__ == "__main__":
                        "start a renewal", batch)
     CS_UI.renew_cert(store, cn, hostcert)
   else:
-    raise Exception("Unknown Certificate State!")
+    raise RuntimeError("Unknown Certificate State!")
   sys.exit(0)
