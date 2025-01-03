@@ -19,7 +19,7 @@ following packages installed, they can all be found in the base repos.
 - openssl
 - python
 - python-pycurl
-- pyOpenSSL
+- python-cryptography
 
 It should then just be a case of copying CS.py somewhere, making it executable
 and editing the header to set your site defaults. These should match the
