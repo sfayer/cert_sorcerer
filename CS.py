@@ -222,16 +222,15 @@ class CS_StoredCert:
         try:
           file_out.write(data.decode("ascii"))
         except:
-          print('Failed to write or decode object: {}'.format(data))
+          print(f"Failed to write or decode object: {data}")
           raise
     self.update()
 
   def read(self, file_type):
     """ Read an existing file from the store. """
-    fd = os.open(self._paths[file_type], os.O_RDONLY)
-    file_in = os.fdopen(fd, "r")
-    pem = file_in.read()
-    file_in.close()
+    with os.open(self._paths[file_type], os.O_RDONLY) as fd:
+      with os.fdopen(fd, "r") as file_in:
+        pem = file_in.read()
     return pem
 
   def prepare_renew(self):
@@ -336,9 +335,8 @@ class CS_CertTools:
     if not store.get_state() >= CS_Const.CSR:
       raise RuntimeError("Certificate in wrong state to get public key.")
     path = store.get_path(CS_Const.CSR_FILE)
-    file_in = open(path, "rb")
-    csr_pem = file_in.read()
-    file_in.close()
+    with open(path, "rb") as file_in:
+      csr_pem = file_in.read()
     pubkey = x509.load_pem_x509_csr(csr_pem).public_key()
     key = pubkey.public_bytes(encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo).decode()
@@ -353,9 +351,8 @@ class CS_CertTools:
     """ Get the serial of a certificate by path. """
     if not os.path.exists(path):
       raise RuntimeError("Client key not found while getting serial.")
-    file_in = open(path, "rb")
-    pem = file_in.read()
-    file_in.close()
+    with open(path, "rb") as file_in:
+      pem = file_in.read()
     cert = x509.load_pem_x509_certificate(pem)
     return cert.serial_number
 
@@ -365,9 +362,8 @@ class CS_CertTools:
         This may prompt the user if the key is encrypted.
         Throws a ValueError if password is wrong.
     """
-    file_in = open(keyfile, "rb")
-    pem = file_in.read()
-    file_in.close()
+    with open(keyfile, "rb") as file_in:
+      pem = file_in.read()
     # We have to handle encrypted keys here
     try:
       key = serialization.load_pem_private_key(pem, password=None)
@@ -384,14 +380,13 @@ class CS_CertTools:
     """ Get the public key of a certificate in raw hexadecimal format of
         modulus.exponent """
     # Gets the public key as a lowercase hexadecimal string
-    file_in = open(certfile, "rb")
-    pem = file_in.read()
-    file_in.close()
+    with open(certfile, "rb") as file_in:
+      pem = file_in.read()
     cert = x509.load_pem_x509_certificate(pem)
     pubnum = cert.public_key().public_numbers()
     modulus = pubnum.n
     exponent = pubnum.e
-    return "%x.%x" % (modulus, exponent)
+    return f"{modulus:x}.{exponent:x}"
 
   @staticmethod
   def do_pppk(nonce, keyid, keyfile = CS_DEF_KEY):
@@ -401,13 +396,13 @@ class CS_CertTools:
     key_split = keyid.split(".")
     if not len(key_split) == 2:
       raise RuntimeError("Unexpected keyid format from CA.")
-    return_nonce = "%s:%u" % (nonce, time.time())
+    return_nonce = f"{nonce}:{time.time():.0f}"
     return_nonce = binascii.hexlify(return_nonce.lower().encode("ascii"))
     modulus = int(key_split[0], 16)
     base = int(return_nonce, 16)
     exponent = CS_CertTools.get_privateexp(keyfile)
     resp = pow(base, exponent, modulus)
-    return "%x" % resp
+    return f"{resp:x}"
 
 class CS_RemoteCA:
   """ Functions for interacting with a remote CA via a web-service. """
@@ -440,10 +435,10 @@ class CS_RemoteCA:
     # Set-up stage 1 PPPK auth if required
     if with_pppk >= CS_Const.Lite_PPPK:
       ext_hdrs = [ "PPPK: this is pppk",
-                   "LocalHost: %s" % socket.gethostname() ]
+                   f"LocalHost: {socket.gethostname()}" ]
       if with_pppk == CS_Const.Full_PPPK:
         userserial = CS_CertTools.get_clientserial(usercert)
-        ext_hdrs.append("serial: %u" % userserial)
+        ext_hdrs.append(f"serial: {userserial}")
       curl.setopt(curl.HTTPHEADER, ext_hdrs)
     # Actually run the request...
     try:
@@ -478,9 +473,9 @@ class CS_RemoteCA:
     # Now we can do the PPPK algorithm
     resp_code = CS_CertTools.do_pppk(nonce, keyid, userkey)
     # Add the new auth codes to the headers
-    ext_hdrs += [ "realm: %s" % realm,
-                  "keyid: %s" % keyid,
-                  "response: %s" % resp_code ]
+    ext_hdrs += [ f"realm: {realm}",
+                  f"keyid: {keyid}",
+                  f"response: {resp_code}" ]
     curl.setopt(curl.HTTPHEADER, ext_hdrs)
     # Reset the buffers and re-send the request
     body = BytesIO()
@@ -517,7 +512,7 @@ class CS_RemoteCA:
     # If we are doing a renewal, we have to include the original public key
     if renewal_cert:
       oldcert_pubkey = CS_CertTools.get_rawpubkey(renewal_cert)
-      renewal_info = "<PublicKey>%s</PublicKey>" % oldcert_pubkey
+      renewal_info = f"<PublicKey>{oldcert_pubkey}</PublicKey>"
       use_pppk = CS_Const.Lite_PPPK
       key = renewal_key
     # Fill out the fields in the CSR XML structure
@@ -530,8 +525,8 @@ class CS_RemoteCA:
     code, data = CS_RemoteCA._do_req(csr_uri, csr_xml, cafile, usercert,
                                      key, use_pppk)
     if not code == 200 and not code == 201:
-      raise RuntimeError("CA returned error code %d (%s) while sending CSR." %
-                         (code, data))
+      raise RuntimeError(
+        f"CA returned error code {code} ({data}) while sending CSR.")
 
   @staticmethod
   def get_cert(pubkey,
@@ -541,11 +536,11 @@ class CS_RemoteCA:
     """
     req_uri = "resources/resource/publickey/pk"
     req_xml = """<?xml version="1.0" encoding="UTF-8" standalone="no"?>""" \
-              """<PublicKey>%s</PublicKey>""" % pubkey
+              f"""<PublicKey>{pubkey}</PublicKey>"""
     code, data = CS_RemoteCA._do_req(req_uri, req_xml, cafile)
     if not code == 200:
-      raise RuntimeError("CA returned error code %d (%s) while fetching cert."
-                         % (code, data))
+      raise RuntimeError(
+        f"CA returned error code {code} ({data}) while fetching cert.")
     # Process the XML tree to get the certificate ID out
     doc = minidom.parseString(data)
     certs = doc.getElementsByTagName("X509Certificate")
@@ -615,9 +610,9 @@ class CS_UI:
       print("As this is a user cert, " \
             "you should add a key passphrase by running:")
       path = store.get_path(CS_Const.KEY_FILE)
-      print("openssl rsa -in %s -out %s.tmp -des3" % (path, path))
-      print("cp %s.tmp %s" % (path, path))
-      print("rm %s.tmp" % path)
+      print(f"openssl rsa -in {path} -out {path}.tmp -des3")
+      print(f"cp {path}.tmp {path}")
+      print(f"rm {path}.tmp")
       print("")
 
   @staticmethod
@@ -634,31 +629,30 @@ class CS_UI:
     print("Completed.")
     cert = store.get_path(CS_Const.CERT_FILE)
     key = store.get_path(CS_Const.KEY_FILE)
-    print("Cert is at: %s" % cert)
-    print("Key is at: %s" % key)
+    print(f"Cert is at: {cert}")
+    print(f"Key is at: {key}")
     print("")
     if not hostcert:
       print("As this is a user cert, you may want to install " \
             "these in your home dir by running:")
       print("mkdir -p ~/.globus")
-      print("cp %s ~/.globus/usercert.pem" % cert)
+      print(f"cp {cert} ~/.globus/usercert.pem")
       print("")
       print("For a user cert, you should add a password to the " \
             "private key at the same time:")
-      print("openssl rsa -in %s -out ~/.globus/userkey.pem -des3" % key)
+      print(f"openssl rsa -in {key} -out ~/.globus/userkey.pem -des3")
       print("")
       print("You may also want to create a .p12 file to import into " \
             "your browser by running:")
-      print("openssl pkcs12 -export -in %s -inkey %s -out gridcert.p12" \
-              % (cert, key))
+      print(f"openssl pkcs12 -export -in {cert} -inkey {key} -out gridcert.p12")
       print("chmod 600 gridcert.p12")
       print("")
     if syscert:
       print("")
       print("You may want to install the hostcert now " \
             "with the following commands:")
-      print("cp %s /etc/grid-security/hostcert.pem" % cert)
-      print("cp %s /etc/grid-security/hostkey.pem" % key)
+      print(f"cp {cert} /etc/grid-security/hostcert.pem")
+      print(f"cp {key} /etc/grid-security/hostkey.pem")
       print("")
       print("Remember that some grid services will also need copies " \
             " in other locations updating and/or different permissions.")
@@ -724,7 +718,8 @@ def print_help():
   sys.exit(0)
 
 
-if __name__ == "__main__":
+def main():
+  """ Main entry point. """
   syscert = False
   batch = False
   fetch = False
@@ -762,22 +757,21 @@ if __name__ == "__main__":
     cn = socket.gethostname()
 
   # If there is no space, assume hostname... Real users must have a space
-  hostcert = not " " in cn
+  hostcert = " " not in cn
   cn = cn.lower()
   if hostcert and not cn.endswith(CS_DEF_DOMAIN):
     # Domain name doesn't end in our expected default
     # This might be a mistake if the script hasn't been customised
     print("Cert domain name doesn't match expected built-in value!")
-    print("Updates about this cert will be sent to: %s" % CS_DEF_EMAIL)
+    print(f"Updates about this cert will be sent to: {CS_DEF_EMAIL}")
     CS_UI.confirm_user("Are you sure that this is correct?")
 
   # Tell the user how we've interpreted their input
-  dn = "OU=%s,L=%s,O=%s,C=%s" % (CS_DEF_RA_OU, CS_DEF_RA_L,
-                                 CS_DEF_CA_O, CS_DEF_CA_C)
+  dn = f"OU={CS_DEF_RA_OU},L={CS_DEF_RA_L},O={CS_DEF_CA_O},C={CS_DEF_CA_C}"
   if hostcert:
-    print('Processing HOST cert with "CN=%s" (%s).' % (cn, dn))
+    print(f'Processing HOST cert with "CN={cn}" ({dn}).')
   else:
-    print('Processing USER cert with "CN=%s" (%s).' % (cn, dn))
+    print(f'Processing USER cert with "CN={cn}" ({dn}).')
 
   store = CS_StoredCert(CS_DEF_STORE, cn)
   if syscert:
@@ -799,8 +793,8 @@ if __name__ == "__main__":
                        or (not os.access(CS_DEF_KEY, os.R_OK))):
       print("A valid usercert & key must be installed at the following " \
             "paths to request a new hostcert:")
-      print("%s" % CS_DEF_CERT)
-      print("%s" % CS_DEF_KEY)
+      print(f"{CS_DEF_CERT}")
+      print(f"{CS_DEF_KEY}")
       sys.exit(1)
     CS_UI.new_cert(store, cn, hostcert, sans)
   elif state == CS_Const.CSR:
@@ -823,3 +817,6 @@ if __name__ == "__main__":
   else:
     raise RuntimeError("Unknown Certificate State!")
   sys.exit(0)
+
+if __name__ == "__main__":
+  main()
