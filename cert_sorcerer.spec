@@ -2,17 +2,17 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.0.14
+Version:        1.1.0
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
 License:        GPLv3
 URL:            https://github.com/sfayer/cert_sorcerer
-Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/CS.py
-Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/README
-Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/NOTES
-Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/QUICKSTART
-Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_0_14/COPYING
+Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_0/CS.py
+Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_0/README
+Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_0/NOTES
+Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_0/QUICKSTART
+Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_0/COPYING
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Requires:       openssl python3 python3-pycurl python3-cryptography
@@ -46,7 +46,7 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
-* ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.0.14-1
+* Fri Jan 03 2025 Simon Fayer <sf105@ic.ac.uk> - 1.1.0-1
 - Drop python2 (EL7) support.
 - Switch from pyopenssl to cryptography.
 - Note: --san option format has changed.
