@@ -17,7 +17,7 @@
 # Copyright 2013-2025, High Energy Physics, Imperial College
 #
 """ Cert Sorcerer - A tool for requesting certificates.
-    Version 1.1.1a (Development Version)
+    Version 1.1.1
 """
 import os
 import sys
@@ -37,7 +37,7 @@ from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-VERSION = "CertSorcerer 1.1.1a (Development Version)"
+VERSION = "CertSorcerer 1.1.1"
 
 # Default Settings
 # Default domain name: Hosts not matching this will print a warning
