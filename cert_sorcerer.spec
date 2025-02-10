@@ -2,17 +2,17 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.1.1
+Version:        1.1.2a
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
 License:        GPLv3
 URL:            https://github.com/sfayer/cert_sorcerer
-Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_1/CS.py
-Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_1/README
-Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_1/NOTES
-Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_1/QUICKSTART
-Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_1/COPYING
+Source0:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_2/CS.py
+Source1:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_2/README
+Source2:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_2/NOTES
+Source3:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_2/QUICKSTART
+Source4:        https://raw.github.com/sfayer/cert_sorcerer/v1_1_2/COPYING
 BuildArch:      noarch
 BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
 Requires:       openssl python3 python3-pycurl python3-cryptography
@@ -46,6 +46,9 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
+* ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.1.2-1
+- Nothing yet!
+
 * Mon Feb 10 2025 Simon Fayer <sf105@ic.ac.uk> - 1.1.1-1
 - Fix for crash on python3.9 (EL9).
 
