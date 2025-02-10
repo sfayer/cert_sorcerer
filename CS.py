@@ -229,9 +229,8 @@ class CS_StoredCert:
 
     def read(self, file_type):
         """ Read an existing file from the store. """
-        with os.open(self._paths[file_type], os.O_RDONLY) as fd:
-            with os.fdopen(fd, "r") as file_in:
-                pem = file_in.read()
+        with open(self._paths[file_type], "r") as file_in:
+            pem = file_in.read()
         return pem
 
     def prepare_renew(self):

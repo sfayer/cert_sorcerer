@@ -47,7 +47,7 @@ rm -rf %{buildroot}
 
 %changelog
 * ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.1.1-1
-- Nothing yet!
+- Fix for crash on python3.9 (EL9).
 
 * Fri Jan 03 2025 Simon Fayer <sf105@ic.ac.uk> - 1.1.0-1
 - Drop python2 (EL7) support.
