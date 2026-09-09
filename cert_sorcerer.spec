@@ -2,7 +2,7 @@
 %global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
 
 Name:           cert_sorcerer
-Version:        1.1.2a
+Version:        1.1.2
 Release:        1%{?dist}
 Summary:        A tool for requesting certificates
 Group:          Applications/Internet
@@ -46,8 +46,8 @@ rm -rf %{buildroot}
 %doc README NOTES QUICKSTART COPYING
 
 %changelog
-* ??? ??? ?? ???? Simon Fayer <sf105@ic.ac.uk> - 1.1.2-1
-- Nothing yet!
+* Wed Sep 09 2026 Simon Fayer <sf105@ic.ac.uk> - 1.1.2-1
+- Add new UKeScience 2026 ROOT + 3B Chain.
 
 * Mon Feb 10 2025 Simon Fayer <sf105@ic.ac.uk> - 1.1.1-1
 - Fix for crash on python3.9 (EL9).
